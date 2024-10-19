@@ -1,16 +1,14 @@
-﻿using Spectre.Console;
+﻿using DietMaker.Controller;
 
-class Program
+namespace DietMaker
 {
-    static void Main(string[] args)
+    class Program
     {
-        var table = new Table();
-        table.AddColumn("Column 1");
-        table.AddColumn("Column 2");
-
-        table.AddRow("Cell 1", "Cell 2");
-        table.AddRow("Cell 3", "Cell 4");
-
-        AnsiConsole.Write(table);
+        static void Main(string[] args)
+        {
+            CalorieController controller = new CalorieController();
+            controller.Run();
+           
+        }
     }
 }
