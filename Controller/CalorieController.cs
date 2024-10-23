@@ -72,9 +72,9 @@ namespace DietMaker.Controller
                 case "Today":
                     selected_date = DateTime.Today;
                     break;
-                case "Select Day":
+                case "Select Date":
 
-                    //day selection screen
+                    selected_date = _view.SelectDateScreen(selected_date);
 
                     break;
                 case "Return":
@@ -174,6 +174,7 @@ namespace DietMaker.Controller
         }
 
 
+        
 
         public void SelectTracking()
         {

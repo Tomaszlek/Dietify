@@ -49,6 +49,21 @@ namespace DietMaker.View
             return choice;
         }
 
+        public DateTime SelectDateScreen(DateTime date)
+        {
+            AnsiConsole.Clear();
+            AnsiConsole.Write(new Rule("[yellow]Day Selection By Date[/]").RuleStyle("grey"));
+
+            var calendar = new Calendar(date.Year, date.Month).Centered();
+            calendar.AddCalendarEvent(date.Year, date.Month, date.Day);
+            AnsiConsole.Write(calendar);
+
+            DateTime choice = AnsiConsole.Ask<DateTime>("Enter Date rrrr.mm.dd: ");
+
+            return choice;
+
+        }
+
         public string AddMeal()
         {
             AnsiConsole.Clear();
