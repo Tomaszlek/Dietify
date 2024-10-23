@@ -1,6 +1,7 @@
 ﻿using Spectre.Console;
 using DietMaker.Model;
 using System.Collections.Generic;
+using SixLabors.ImageSharp.Processing;
 
 namespace DietMaker.View
 {
@@ -18,6 +19,11 @@ namespace DietMaker.View
 
             DisplayLogo();
             AnsiConsole.Write(new Rule("[yellow]Main Menu[/]").RuleStyle("grey"));
+
+            /*var image = new CanvasImage("image4.png");
+            image.Mutate(ctx => ctx.Invert());
+            image.MaxWidth(18);
+            AnsiConsole.Write(image);*/
 
             AnsiConsole.WriteLine("Selected day: " + selected_date.ToShortDateString() + "\n");
 
@@ -171,7 +177,7 @@ namespace DietMaker.View
             return new CalorieModel();
         }
 
-        public void ViewEntries(List<CalorieModel> entries)
+        public string ViewEntries(List<CalorieModel> entries)
         {
             AnsiConsole.Clear();
             AnsiConsole.Write(new Rule("[yellow]Entries View[/]").RuleStyle("grey"));
@@ -189,13 +195,19 @@ namespace DietMaker.View
             }
 
             AnsiConsole.Write(table);
-            Console.ReadKey();
+
+            var selectio_prompt = new SelectionPrompt<string>().Title("What is Your Intent?").AddChoices(new string[] { "Make Some Changes", "Return" });
+            string choice = AnsiConsole.Prompt(selectio_prompt);
+
+            return choice;
         }
 
         public void ExitProgram()
         {
-            AnsiConsole.MarkupLine("[red]Exiting program...[/]");
+            AnsiConsole.Clear();
+
             
+
         }
     }
 }
