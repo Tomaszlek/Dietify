@@ -19,7 +19,7 @@ namespace DietMaker.View
             DisplayLogo();
             AnsiConsole.Write(new Rule("[yellow]Main Menu[/]").RuleStyle("grey"));
 
-            Console.WriteLine(selected_date.ToShortDateString());
+            AnsiConsole.WriteLine("Selected day: " + selected_date.ToShortDateString() + "\n");
 
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("What would you like to do?")
             .AddChoices(new[] { "Select Day", "Add Meal", "View Entries", "Select Tracking", "Exit" }));
@@ -60,17 +60,51 @@ namespace DietMaker.View
             return choice;
         }
 
-        public void DisplayEnterMacro()
+        public DTO DisplayEnterMacro(DTO dto)
         {
+            
+
             AnsiConsole.Clear();
             AnsiConsole.Write(new Rule("[yellow]Macro Entry Menu[/]").RuleStyle("grey"));
-            /*
-                        int calories = AnsiConsole.Ask<int>("Enter calories:");
-                        int carbs = AnsiConsole.Ask<int>("Enter carbs:");
-                        int fats = AnsiConsole.Ask<int>("Enter fats:");
-                        int protein = AnsiConsole.Ask<int>("Enter protein:");*/
 
-            Console.ReadKey();
+            /*var layout = new Layout("Root").SplitColumns(new Layout("L"), new Layout("R"));
+            layout["L"].Update();*/
+            AnsiConsole.Cursor.MoveDown();
+            Text t = new Text("Carbs = " + dto.Carbs + " | Fats = " + dto.Fats + " | Proteis = " + dto.Proteins + " | Calories = " + dto.Calories).Centered();
+            AnsiConsole.Write(t);
+
+            dto.choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("What are you interested in?")
+            .AddChoices(new[] { "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }));
+            
+
+            //Console.ReadKey();
+            return dto;
+        }
+
+        public string DisAppMacro()
+        {
+            string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("Do you want to apply?")
+            .AddChoices(new[] { "Yes", "No" }));
+
+            return choice;
+        }
+
+        public int EnterInt(string text)
+        {
+            int number = AnsiConsole.Ask<int>(text);
+            return number;
+        }
+
+        public float EnterFloat(string text)
+        {
+            float number = AnsiConsole.Ask<float>(text);
+            return number;
+        }
+
+        public string EnterString(string text)
+        {
+            string str = AnsiConsole.Ask<string>(text);
+            return str;
         }
 
         public CalorieModel AddEntry()
@@ -80,32 +114,27 @@ namespace DietMaker.View
             string productName = AnsiConsole.Ask<string>("Enter product name:");
             int calories = AnsiConsole.Ask<int>("Enter number of calories:");
 
-            return new CalorieModel(productName, calories);
+            return new CalorieModel();
         }
 
-        public void ShowEntries(List<CalorieModel> entries)
+        public void ViewEntries(List<CalorieModel> entries)
         {
             AnsiConsole.Clear();
+            AnsiConsole.Write(new Rule("[yellow]Entries View[/]").RuleStyle("grey"));
 
             var table = new Table();
             table.AddColumn("Product Name");
+            table.AddColumn("Carbs");
+            table.AddColumn("Fats");
+            table.AddColumn("Proteins");
             table.AddColumn("Calories");
 
             foreach (var entry in entries)
             {
-                table.AddRow(entry.ProductName, entry.Calories.ToString());
+                table.AddRow(entry.ProductName, entry.Carbs.ToString(), entry.Fats.ToString(), entry.Proteins.ToString(), entry.Calories.ToString());
             }
 
             AnsiConsole.Write(table);
-            Console.ReadKey();
-        }
-
-        public void ShowTotalCalories(int totalCalories)
-        {
-            AnsiConsole.Clear();
-
-            AnsiConsole.MarkupLine($"[bold]Total Calories: {totalCalories}[/]");
-
             Console.ReadKey();
         }
 

@@ -4,16 +4,12 @@ using Spectre.Console;
 using System.Collections.Generic;
 using System;
 
-void clear_dto()
-{
-
-}
 
 namespace DietMaker.Controller
 {
     public class CalorieController
     {
-        private Dictionary<DateTime, List<CalorieModel>> DayList;
+        private Dictionary<string, List<CalorieModel>> DayList;
         private CalorieView _view;
         private bool running = true;
         private DateTime selected_date;
@@ -21,7 +17,7 @@ namespace DietMaker.Controller
 
         public CalorieController()
         {
-            DayList = new Dictionary<DateTime, List<CalorieModel>>();
+            DayList = new Dictionary<string, List<CalorieModel>>();
             _view = new CalorieView();
             selected_date = DateTime.Today;
             dto = new DTO();
@@ -108,7 +104,7 @@ namespace DietMaker.Controller
                         //API sherch screen
                         break;
                     case "Enter Macro":
-                        _view.DisplayEnterMacro();
+                        EnterMacro();
                         break;
                     case "Return":
                         go_back = true;
@@ -117,6 +113,68 @@ namespace DietMaker.Controller
             }
         }
 
+        public void EnterMacro()
+        {
+            bool go_back = false;
+
+            while (!go_back)
+            {
+                dto = _view.DisplayEnterMacro(dto);
+                string choice = dto.choice;
+                switch (choice)
+                {
+                    case "Carbs":
+                        dto.Carbs = _view.EnterInt("How many grams of Carbs: ");
+                        break;
+                    case "Fats":
+                        dto.Fats = _view.EnterInt("How many grams of Fats: ");
+                        break;
+                    case "Proteins":
+                        dto.Proteins = _view.EnterInt("How many grams of Proteins: ");
+                        break;
+                    case "Calories":
+                        dto.Calories = _view.EnterInt("How many Calories: ");
+                        break;
+                    case "Apply/Discard":
+
+                        string choice1 = _view.DisAppMacro();
+
+                        if (choice == "NO")
+                        {
+                            dto.reset_values();
+                            go_back = true;
+                        }
+                        else
+                        {
+
+                            if (!DayList.ContainsKey(selected_date.ToShortDateString()))
+                            {
+                                DayList.Add(selected_date.ToShortDateString(), new List<CalorieModel>());
+                            }
+
+                            CalorieModel model = new CalorieModel();
+                            model.ProductName = "Macro "; model.Carbs = dto.Carbs; model.Fats = dto.Fats; model.Proteins = dto.Proteins;
+
+                            if (dto.Calories == 0)
+                            {                               
+                                model.Calories = model.Carbs * 4 + model.Fats * 9 + model.Proteins * 4;
+                            }
+                            else
+                            {
+                                model.Calories = dto.Calories;                               
+                            }
+
+                            DayList[selected_date.ToShortDateString()].Add(model);
+                            dto.reset_values();
+                            go_back = true;
+                        }
+                        break;
+                }
+            }
+        }
+
+
+
         public void SelectTracking()
         {
             _view.DisplayTracking();
@@ -124,7 +182,14 @@ namespace DietMaker.Controller
 
         public void ViewEntries()
         {
-            //_view.ShowEntries(_entries);
+            if (DayList.ContainsKey(selected_date.ToShortDateString())){
+                _view.ViewEntries(DayList[selected_date.ToShortDateString()]);
+            }
+            else
+            {
+                _view.ViewEntries(new List<CalorieModel>());
+            }
+            
         }
 
         public void TotalCalories()

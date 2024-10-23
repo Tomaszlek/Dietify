@@ -9,11 +9,23 @@
         public int Proteins { get; set; }
 
 
-        public CalorieModel(string productName, int calories)
+        public CalorieModel(int carbs, int fats, int proteins, int calories, string productname)
         {
-            ProductName = productName;
+            Carbs = carbs;
+            Fats = fats;
+            Proteins = proteins;
             Calories = calories;
+            ProductName = productname;
         }
+
+        public CalorieModel() {
+            Carbs = 0;
+            Fats = 0;
+            Proteins = 0;
+            Calories = 0;
+            ProductName = string.Empty;
+        }
+
     }
 
     public class UserModel
@@ -26,15 +38,41 @@
 
     }
 
-    public struct DTO
+    public class DTO
     {
-        int Calories;
-        int Fats;
-        int Carbs;
-        int Proteins;
-        string product_name;
-        float partial_ammount;
-        int gram_ammount;
+        public int Calories { get; set; }
+        public int Fats { get; set; }
+        public int Carbs { get; set; }
+        public int Proteins { get; set; }
+        public string product_name { get; set; }
+        public string choice { get; set; }
+        public float partial_ammount { get; set; }
+        public int gram_ammount { get; set; }
+
+        public DTO()
+        {
+            Calories = 0;
+            Fats = 0;
+            Carbs = 0;
+            Proteins = 0;
+            gram_ammount = 0;
+            partial_ammount = 1;
+            product_name = string.Empty;
+            choice = string.Empty;
+        }
+
+        public void reset_values()
+        {
+            Calories = 0;
+            Fats = 0;
+            Carbs = 0;
+            Proteins = 0;
+            gram_ammount = 0;
+            partial_ammount = 1;
+            product_name = string.Empty;
+            choice = string.Empty;
+        }
+
     }
 
 }
