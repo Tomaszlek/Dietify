@@ -4,6 +4,11 @@ using Spectre.Console;
 using System.Collections.Generic;
 using System;
 
+void clear_dto()
+{
+
+}
+
 namespace DietMaker.Controller
 {
     public class CalorieController
@@ -12,13 +17,14 @@ namespace DietMaker.Controller
         private CalorieView _view;
         private bool running = true;
         private DateTime selected_date;
-        
+        private DTO dto;
 
         public CalorieController()
         {
             DayList = new Dictionary<DateTime, List<CalorieModel>>();
             _view = new CalorieView();
             selected_date = DateTime.Today;
+            dto = new DTO();
         }
 
         public void Run()
@@ -88,22 +94,26 @@ namespace DietMaker.Controller
 
         public void AddMeal()
         {
-            string choice = _view.AddMeal();
+            bool go_back = false;
 
-            switch (choice)
+            while (!go_back)
             {
-                case "My Meals":
-                    //my meals screen
-                    break;
-                case "Meal Database":
-                    //
-                    break;
-                case "Enter Macro":
-                    _view.DisplayEnterMacro();
-                    break;
-                case "Return":
-                    //
-                    break;
+                string choice = _view.AddMeal();
+                switch (choice)
+                {
+                    case "My Meals":
+                        //my meals screen
+                        break;
+                    case "Meal Database":
+                        //API sherch screen
+                        break;
+                    case "Enter Macro":
+                        _view.DisplayEnterMacro();
+                        break;
+                    case "Return":
+                        go_back = true;
+                        break;
+                }
             }
         }
 
