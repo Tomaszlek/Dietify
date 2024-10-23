@@ -22,12 +22,12 @@ namespace DietMaker.View
             AnsiConsole.WriteLine("Selected day: " + selected_date.ToShortDateString() + "\n");
 
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("What would you like to do?")
-            .AddChoices(new[] { "Select Day", "Add Meal", "View Entries", "Select Tracking", "Exit" }));
+            .AddChoices(new[] { "Select Day", "Add Meal", "View Entries", "Select Tracking", "Options", "Exit" }));
 
             return choice;
         }
 
-        public string DisplayTracking()
+        public string DisplayTrackingMenu()
         {
             AnsiConsole.Clear();
             AnsiConsole.Write(new Rule("[yellow]Tracking Menu[/]").RuleStyle("grey"));
@@ -36,6 +36,45 @@ namespace DietMaker.View
             .AddChoices(new[] { "Dayly", "Weekly", "Monthly", "Return" }));
 
             return choice;
+        }
+
+        public string OptionsMenu()
+        {
+            AnsiConsole.Clear();
+            AnsiConsole.Write(new Rule("[yellow]Options Menu[/]").RuleStyle("grey"));
+
+            string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("What are you interested in?")
+            .AddChoices(new[] { "Set Your Goal", "Save Data", "Return" }));
+
+            return choice;
+        }
+
+        public DTO SetYourGoal(DTO dto, UserModel user)
+        {
+            AnsiConsole.Clear();
+            AnsiConsole.Write(new Rule("[yellow]Goal Setting Menu[/]").RuleStyle("grey"));
+
+            AnsiConsole.Cursor.MoveDown();
+            Text t1 = new Text("Looking Good " + user.UserName + '\n').Centered();
+            AnsiConsole.Write(t1);
+            
+            Text t = new Text("Carbs Goal = " + dto.Carbs + " | Fats Goal = " + dto.Fats + " | Proteis Goal = " + dto.Proteins
+            + " | Calories Goal = " + dto.Calories).Centered();
+            AnsiConsole.Write(t);
+
+            dto.choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("Set Your Goals, You Can Do It!")
+            .AddChoices(new[] { "User Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }));
+
+            return dto;
+        }
+
+        public void DayTracking(DTO dto, UserModel user)
+        {
+            AnsiConsole.Clear();
+            
+
+
+
         }
 
         public string SelectDayScreen()

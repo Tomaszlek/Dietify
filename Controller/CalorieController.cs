@@ -9,6 +9,7 @@ namespace DietMaker.Controller
 {
     public class CalorieController
     {
+        private UserModel _user;
         private Dictionary<string, List<CalorieModel>> DayList;
         private CalorieView _view;
         private bool running = true;
@@ -17,6 +18,7 @@ namespace DietMaker.Controller
 
         public CalorieController()
         {
+            _user = new UserModel();
             DayList = new Dictionary<string, List<CalorieModel>>();
             _view = new CalorieView();
             selected_date = DateTime.Today;
@@ -45,15 +47,86 @@ namespace DietMaker.Controller
                         SelectTracking();
                         break;
                     case "Exit":
-
                         _view.ExitProgram();
-                        Exit();
-
+                        running = false;
+                        break;
+                    case "Options":
+                        Options();
                         break;
                 }
 
             }
 
+        }
+
+        public void Options()
+        {
+            bool go_back = false;
+
+            while (!go_back)
+            {
+                string choice = _view.OptionsMenu();
+                switch (choice)
+                {
+                    case "Set Your Goal":
+                        SetYourGoal();
+                        break;
+                    case "Save Data":
+                        
+                        break;
+                    case "Return":
+                        go_back = true;
+                        break;
+                }
+            }
+        }
+
+        public void SetYourGoal()
+        {
+            bool go_back = false;
+
+            while (!go_back)
+            {
+                dto = _view.SetYourGoal(dto, _user);
+                string choice = dto.choice;
+                switch (choice)
+                {
+                    case "Carbs":
+                        dto.Carbs = _view.EnterInt("How many grams of Carbs: ");
+                        break;
+                    case "User Name":
+                        dto.product_name = _view.EnterString("Set your User Name:");
+                        break;
+                    case "Fats":
+                        dto.Fats = _view.EnterInt("How many grams of Fats: ");
+                        break;
+                    case "Proteins":
+                        dto.Proteins = _view.EnterInt("How many grams of Proteins: ");
+                        break;
+                    case "Calories":
+                        dto.Calories = _view.EnterInt("How many Calories: ");
+                        break;
+                    case "Apply/Discard":
+
+                        string choice1 = _view.DisAppMacro();
+
+                        if(choice1 == "NO")
+                        {
+                            dto.reset_values();
+                            go_back = true;
+                        }
+                        else
+                        {
+                            _user.carbs_goal = dto.Carbs;
+                            _user.UserName = dto.product_name;
+                            _user.fats_goal = dto.Fats;
+                            _user.proteins_goal = dto.Proteins;
+                            _user.calories_goal = dto.Calories;
+                        }
+                        go_back = true;
+                        break;
+                }
+            }
         }
 
         public void SelectDay()
@@ -73,9 +146,7 @@ namespace DietMaker.Controller
                     selected_date = DateTime.Today;
                     break;
                 case "Select Date":
-
                     selected_date = _view.SelectDateScreen(selected_date);
-
                     break;
                 case "Return":
 
@@ -83,10 +154,7 @@ namespace DietMaker.Controller
             }
         }
 
-        public void Exit()
-        {
-            running = false;
-        }
+       
 
         public void AddMeal()
         {
@@ -173,12 +241,9 @@ namespace DietMaker.Controller
             }
         }
 
-
-        
-
         public void SelectTracking()
         {
-            _view.DisplayTracking();
+            _view.DisplayTrackingMenu();
         }
 
         public void ViewEntries()
