@@ -60,9 +60,9 @@ namespace DietMaker.Controller
 
         }
 
-        public int CalculateCalories(DTO dto)
+        public uint CalculateCalories(DTO dto)
         {
-            return dto.Carbs * 4 + dto.Fats * 9 + dto.Proteins * 4;
+            return (uint)(dto.Carbs * 4 + dto.Fats * 9 + dto.Proteins * 4);
         }
         public void Options()
         {
@@ -97,19 +97,19 @@ namespace DietMaker.Controller
                 switch (choice)
                 {
                     case "Carbs":
-                        dto.Carbs = _view.EnterInt("How many grams of Carbs: ");
+                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
                         break;
                     case "User Name":
                         dto.product_name = _view.EnterString("Set your User Name:");
                         break;
                     case "Fats":
-                        dto.Fats = _view.EnterInt("How many grams of Fats: ");
+                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
                         break;
                     case "Proteins":
-                        dto.Proteins = _view.EnterInt("How many grams of Proteins: ");
+                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
                         break;
                     case "Calories":
-                        dto.Calories = _view.EnterInt("How many Calories: ");
+                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
                         break;
                     case "Apply/Discard":
 
@@ -122,11 +122,11 @@ namespace DietMaker.Controller
                         }
                         else
                         {
-                            _user.carbs_goal = dto.Carbs;
+                            _user.carbs_goal = (uint)dto.Carbs;
                             _user.UserName = dto.product_name;
-                            _user.fats_goal = dto.Fats;
-                            _user.proteins_goal = dto.Proteins;
-                            _user.calories_goal = dto.Calories;
+                            _user.fats_goal = (uint)dto.Fats;
+                            _user.proteins_goal = (uint)dto.Proteins;
+                            _user.calories_goal = (uint)dto.Calories;
                         }
                         go_back = true;
                         break;
@@ -197,16 +197,16 @@ namespace DietMaker.Controller
                 switch (choice)
                 {
                     case "Carbs":
-                        dto.Carbs = _view.EnterInt("How many grams of Carbs: ");
+                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
                         break;
                     case "Fats":
-                        dto.Fats = _view.EnterInt("How many grams of Fats: ");
+                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
                         break;
                     case "Proteins":
-                        dto.Proteins = _view.EnterInt("How many grams of Proteins: ");
+                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
                         break;
                     case "Calories":
-                        dto.Calories = _view.EnterInt("How many Calories: ");
+                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
                         break;
                     case "Apply/Discard":
 
@@ -226,7 +226,7 @@ namespace DietMaker.Controller
                             }
 
                             CalorieModel model = new CalorieModel();
-                            model.ProductName = "Macro "; model.Carbs = dto.Carbs; model.Fats = dto.Fats; model.Proteins = dto.Proteins;
+                            model.ProductName = "Macro "; model.Carbs = (uint)dto.Carbs; model.Fats = (uint)dto.Fats; model.Proteins = (uint)dto.Proteins;
 
                             if (dto.Calories == 0)
                             {                               
@@ -234,7 +234,7 @@ namespace DietMaker.Controller
                             }
                             else
                             {
-                                model.Calories = dto.Calories;                               
+                                model.Calories = (uint)dto.Calories;                               
                             }
 
                             DayList[selected_date.ToShortDateString()].Add(model);
@@ -302,7 +302,7 @@ namespace DietMaker.Controller
                         
                         break;
                     case "Remove Entry":
-
+                        //entry_index = _view.EnterUint("Give me index of en entry you want to remowe");
                         break;
 
                     case "Add Entry":
@@ -315,6 +315,8 @@ namespace DietMaker.Controller
 
             }
         }
+
+        
 
         public void AddEntry()
         {
@@ -330,16 +332,16 @@ namespace DietMaker.Controller
                         dto.product_name = _view.EnterString("What is your product called: ");
                         break;
                     case "Carbs":
-                        dto.Carbs = _view.EnterInt("How many grams of Carbs: ");
+                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
                         break;
                     case "Fats":
-                        dto.Fats = _view.EnterInt("How many grams of Fats: ");
+                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
                         break;
                     case "Proteins":
-                        dto.Proteins = _view.EnterInt("How many grams of Proteins: ");
+                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
                         break;
                     case "Calories":
-                        dto.Calories = _view.EnterInt("How many Calories: ");
+                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
                         break;
                     case "Apply/Discard":
                         string choice1 = _view.ApplyDiscard();
@@ -352,7 +354,7 @@ namespace DietMaker.Controller
                                 }
 
                                 CalorieModel model = new CalorieModel();
-                                model.ProductName = dto.product_name; model.Carbs = dto.Carbs; model.Fats = dto.Fats; model.Proteins = dto.Proteins;
+                                model.ProductName = dto.product_name; model.Carbs = (uint)dto.Carbs; model.Fats = (uint)dto.Fats; model.Proteins = (uint)dto.Proteins;
 
                                 if (dto.Calories == 0)
                                 {
@@ -360,7 +362,7 @@ namespace DietMaker.Controller
                                 }
                                 else
                                 {
-                                    model.Calories = dto.Calories;
+                                    model.Calories = (uint)dto.Calories;
                                 }
                                 DayList[selected_date.ToShortDateString()].Add(model);
                                 break;

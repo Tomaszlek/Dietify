@@ -149,9 +149,9 @@ namespace DietMaker.View
             return choice;
         }
 
-        public int EnterInt(string text)
+        public uint EnterUint(string text)
         {
-            int number = AnsiConsole.Ask<int>(text);
+            uint number = AnsiConsole.Ask<uint>(text);
             return number;
         }
 

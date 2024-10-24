@@ -3,13 +3,13 @@
     public class CalorieModel
     {
         public string ProductName { get; set; }
-        public int Calories { get; set; }
-        public int Fats { get; set; }
-        public int Carbs { get; set; }
-        public int Proteins { get; set; }
+        public uint Calories { get; set; }
+        public uint Fats { get; set; }
+        public uint Carbs { get; set; }
+        public uint Proteins { get; set; }
 
 
-        public CalorieModel(int carbs, int fats, int proteins, int calories, string productname)
+        public CalorieModel(uint carbs, uint fats, uint proteins, uint calories, string productname)
         {
             Carbs = carbs;
             Fats = fats;
@@ -31,10 +31,10 @@
     public class UserModel
     {
         public string UserName { get; set; }
-        public int carbs_goal { get; set; }
-        public int proteins_goal { get; set; }
-        public int fats_goal { get; set; }
-        public int calories_goal { get; set; }
+        public uint carbs_goal { get; set; }
+        public uint proteins_goal { get; set; }
+        public uint fats_goal { get; set; }
+        public uint calories_goal { get; set; }
 
     }
 
