@@ -155,6 +155,16 @@ namespace DietMaker.View
             return number;
         }
 
+        public void Error(string tekst)
+        {
+            AnsiConsole.Clear();
+            Text text = new Text(tekst).Centered();
+            AnsiConsole.Write(new Rule("[yellow]Something Unusual Has Happened[/]").RuleStyle("grey"));
+            AnsiConsole.Write(text);
+
+            Console.ReadKey();
+        }
+
         public float EnterFloat(string text)
         {
             float number = AnsiConsole.Ask<float>(text);

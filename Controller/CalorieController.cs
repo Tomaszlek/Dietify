@@ -282,6 +282,7 @@ namespace DietMaker.Controller
         {
             bool go_back = false;
             string choice = string.Empty;
+            string choice1 = string.Empty;
             int entry_index = -1;
 
             while(!go_back){
@@ -302,7 +303,28 @@ namespace DietMaker.Controller
                         
                         break;
                     case "Remove Entry":
-                        //entry_index = _view.EnterUint("Give me index of en entry you want to remowe");
+
+                        if (!DayList.ContainsKey(selected_date.ToShortDateString()))
+                        {
+                            _view.Error("There is Nothing to Remove Friend :)");
+                            break;
+                        }
+
+                        entry_index = (int)_view.EnterUint("Give me index of en entry you want to remowe");
+                        choice1 = _view.ApplyDiscard();
+
+                        if(choice1 == "Yes")
+                        {
+                            if (DayList[selected_date.ToShortDateString()].Count() < entry_index){
+                                _view.Error("There is no such Index Friend");
+                                break;
+                            }
+                            DayList[selected_date.ToShortDateString()].RemoveAt(entry_index);
+                        }
+                        else
+                        {
+                            entry_index = -1;
+                        }
                         break;
 
                     case "Add Entry":
