@@ -59,6 +59,10 @@ namespace DietMaker.Controller
 
         }
 
+        public int CalculateCalories(DTO dto)
+        {
+            return dto.Carbs * 4 + dto.Fats * 9 + dto.Proteins * 4;
+        }
         public void Options()
         {
             bool go_back = false;
