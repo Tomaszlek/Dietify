@@ -141,7 +141,7 @@ namespace DietMaker.View
             return dto;
         }
 
-        public string DisAppMacro()
+        public string ApplyDiscard()
         {
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("Do you want to apply?")
             .AddChoices(new[] { "Yes", "No" }));

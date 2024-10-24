@@ -3,6 +3,7 @@ using DietMaker.View;
 using Spectre.Console;
 using System.Collections.Generic;
 using System;
+using System.Linq.Expressions;
 
 
 namespace DietMaker.Controller
@@ -112,7 +113,7 @@ namespace DietMaker.Controller
                         break;
                     case "Apply/Discard":
 
-                        string choice1 = _view.DisAppMacro();
+                        string choice1 = _view.ApplyDiscard();
 
                         if(choice1 == "NO")
                         {
@@ -209,7 +210,7 @@ namespace DietMaker.Controller
                         break;
                     case "Apply/Discard":
 
-                        string choice1 = _view.DisAppMacro();
+                        string choice1 = _view.ApplyDiscard();
 
                         if (choice == "NO")
                         {
@@ -341,8 +342,33 @@ namespace DietMaker.Controller
                         dto.Calories = _view.EnterInt("How many Calories: ");
                         break;
                     case "Apply/Discard":
+                        string choice1 = _view.ApplyDiscard();
+                        
+                        switch (choice1){
+                            case "Yes":
+                                if (!DayList.ContainsKey(selected_date.ToShortDateString()))
+                                {
+                                    DayList.Add(selected_date.ToShortDateString(), new List<CalorieModel>());
+                                }
 
-        
+                                CalorieModel model = new CalorieModel();
+                                model.ProductName = dto.product_name; model.Carbs = dto.Carbs; model.Fats = dto.Fats; model.Proteins = dto.Proteins;
+
+                                if (dto.Calories == 0)
+                                {
+                                    model.Calories = CalculateCalories(dto);
+                                }
+                                else
+                                {
+                                    model.Calories = dto.Calories;
+                                }
+                                DayList[selected_date.ToShortDateString()].Add(model);
+                                break;
+                            case "No":
+                                dto.reset_values();
+                                break;
+                        }
+                        go_back = true;
                         break;
                 }
             }
