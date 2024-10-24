@@ -218,6 +218,25 @@ namespace DietMaker.View
             return choice;
         }
 
+        public DTO AddEntry(DTO dto)
+        {
+
+
+            AnsiConsole.Clear();
+            AnsiConsole.Write(new Rule("[yellow]Manual Entry Adding Menu[/]").RuleStyle("grey"));
+
+            //AnsiConsole.Write('\n');
+            Text t = new Text("Product Name = " + dto.product_name + " | Carbs = " + dto.Carbs + " | Fats = " + dto.Fats + " | Proteis = " + dto.Proteins + " | Calories = " + dto.Calories).Centered();
+            AnsiConsole.Write(t);
+
+            dto.choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("What are you interested in?")
+            .AddChoices(new[] {"Product Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }));
+
+
+            //Console.ReadKey();
+            return dto;
+        }
+
         public void ExitProgram()
         {
             AnsiConsole.Clear();

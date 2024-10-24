@@ -277,6 +277,7 @@ namespace DietMaker.Controller
         {
             bool go_back = false;
             string choice = string.Empty;
+            int entry_index = -1;
 
             while(!go_back){
 
@@ -286,26 +287,60 @@ namespace DietMaker.Controller
                 }
                 else
                 {
-
+                    var empty_entry = new List<CalorieModel>();
+                    choice = _view.EditEntriesChoices(empty_entry);
                 }
 
                 switch (choice)
                 {
                     case "Edit Entry":
-
+                        
                         break;
                     case "Remove Entry":
 
                         break;
 
                     case "Add Entry":
-
+                        AddEntry();
                         break;
                     case "Return":
                         go_back = true;
                         break;
                 }
 
+            }
+        }
+
+        public void AddEntry()
+        {
+            bool go_back = false;
+
+            while (!go_back)
+            {
+                dto = _view.AddEntry(dto);
+                string choice = dto.choice;
+                switch (choice)
+                {
+                    case "Product Name":
+                        dto.product_name = _view.EnterString("What is your product called: ");
+                        break;
+                    case "Carbs":
+                        dto.Carbs = _view.EnterInt("How many grams of Carbs: ");
+                        break;
+                    case "Fats":
+                        dto.Fats = _view.EnterInt("How many grams of Fats: ");
+                        break;
+                    case "Proteins":
+                        dto.Proteins = _view.EnterInt("How many grams of Proteins: ");
+                        break;
+                    case "Calories":
+                        dto.Calories = _view.EnterInt("How many Calories: ");
+                        break;
+                    case "Apply/Discard":
+
+        
+                        break;
+                }
             }
         }
 
