@@ -248,14 +248,65 @@ namespace DietMaker.Controller
 
         public void ViewEntries()
         {
-            if (DayList.ContainsKey(selected_date.ToShortDateString())){
-                _view.ViewEntries(DayList[selected_date.ToShortDateString()]);
-            }
-            else
+            bool go_back = false;
+            string choice = string.Empty;
+
+            while (!go_back)
             {
-                _view.ViewEntries(new List<CalorieModel>());
+                if (DayList.ContainsKey(selected_date.ToShortDateString()))
+                {
+                    choice = _view.ViewEntries(DayList[selected_date.ToShortDateString()]);
+                }
+                else
+                {
+                    choice = _view.ViewEntries(new List<CalorieModel>());
+                }
+
+                if (choice == "Make Some Changes")
+                {
+                    EditEntriesChoices();
+                }
+                else
+                {
+                    go_back = true;
+                }
             }
-            
+        }
+
+        public void EditEntriesChoices()
+        {
+            bool go_back = false;
+            string choice = string.Empty;
+
+            while(!go_back){
+
+                if (DayList.ContainsKey(selected_date.ToShortDateString()))
+                {
+                    choice = _view.EditEntriesChoices(DayList[selected_date.ToShortDateString()]);
+                }
+                else
+                {
+
+                }
+
+                switch (choice)
+                {
+                    case "Edit Entry":
+
+                        break;
+                    case "Remove Entry":
+
+                        break;
+
+                    case "Add Entry":
+
+                        break;
+                    case "Return":
+                        go_back = true;
+                        break;
+                }
+
+            }
         }
 
         public void TotalCalories()

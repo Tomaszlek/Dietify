@@ -183,15 +183,18 @@ namespace DietMaker.View
             AnsiConsole.Write(new Rule("[yellow]Entries View[/]").RuleStyle("grey"));
 
             var table = new Table();
+            table.AddColumn("Num.");
             table.AddColumn("Product Name");
             table.AddColumn("Carbs");
             table.AddColumn("Fats");
             table.AddColumn("Proteins");
             table.AddColumn("Calories");
 
+            int i = 0;
             foreach (var entry in entries)
             {
-                table.AddRow(entry.ProductName, entry.Carbs.ToString(), entry.Fats.ToString(), entry.Proteins.ToString(), entry.Calories.ToString());
+                table.AddRow(i.ToString() , entry.ProductName, entry.Carbs.ToString(), entry.Fats.ToString(), entry.Proteins.ToString(), entry.Calories.ToString());
+                i++;
             }
 
             AnsiConsole.Write(table);
@@ -199,6 +202,19 @@ namespace DietMaker.View
             var selectio_prompt = new SelectionPrompt<string>().Title("What is Your Intent?").AddChoices(new string[] { "Make Some Changes", "Return" });
             string choice = AnsiConsole.Prompt(selectio_prompt);
 
+            return choice;
+        }
+
+        public string EditEntriesChoices(List<CalorieModel> entries)
+        {
+            AnsiConsole.Clear();
+            AnsiConsole.Write(new Rule("[yellow]Entry Modification Menu[/]").RuleStyle("grey"));
+
+            var selection_prompt = new SelectionPrompt<string>().Title("How Do You Want To Modify?")
+            .AddChoices(new string[] { "Edit Entry", "Remove Entry", "Add Entry", "Return" });
+
+            string choice = AnsiConsole.Prompt(selection_prompt);
+            
             return choice;
         }
 
