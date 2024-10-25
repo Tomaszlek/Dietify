@@ -26,6 +26,13 @@
             ProductName = string.Empty;
         }
 
+        public DTO CopyToDTO()
+        {
+            var dto = new DTO();
+            dto.product_name = ProductName; dto.Carbs = (int)Carbs; dto.Fats = (int)Fats;
+            dto.Proteins = (int)Proteins; dto.Calories = (int)Calories;
+            return dto;
+        }
     }
 
     public class UserModel

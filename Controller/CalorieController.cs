@@ -300,7 +300,22 @@ namespace DietMaker.Controller
                 switch (choice)
                 {
                     case "Edit Entry":
-                        
+                        if (!DayList.ContainsKey(selected_date.ToShortDateString()))
+                        {
+                            _view.Error("There is Nothing to Modify");
+                            break;
+                        }
+
+                        entry_index = (int)_view.EnterUint("Give me index of en entry you want to Modify");
+
+                        if (DayList[selected_date.ToShortDateString()].Count <= entry_index)
+                        {
+                            _view.Error("There is no such Index Friend");
+                            break;
+                        }
+
+                        ModifyEntry((uint)entry_index);
+
                         break;
                     case "Remove Entry":
 
@@ -321,10 +336,7 @@ namespace DietMaker.Controller
                             }
                             DayList[selected_date.ToShortDateString()].RemoveAt(entry_index);
                         }
-                        else
-                        {
-                            entry_index = -1;
-                        }
+                        entry_index = -1;
                         break;
 
                     case "Add Entry":
@@ -338,7 +350,55 @@ namespace DietMaker.Controller
             }
         }
 
-        
+        public void ModifyEntry(uint entry_index)
+        {
+            bool go_back = false;
+            dto = DayList[selected_date.ToShortDateString()][(int)entry_index].CopyToDTO();
+            
+
+            while (!go_back)
+            {
+                dto = _view.ModifyEntry(dto);
+                string choice = dto.choice;
+                switch (choice)
+                {
+                    case "Product Name":
+                        dto.product_name = _view.EnterString("What is your product called: ");
+                        break;
+                    case "Carbs":
+                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
+                        break;
+                    case "Fats":
+                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
+                        break;
+                    case "Proteins":
+                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
+                        break;
+                    case "Calories":
+                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
+                        break;
+                    case "Apply/Discard":
+                        string choice1 = _view.ApplyDiscard();
+
+                        switch (choice1)
+                        {
+                            case "Yes":
+
+                                CalorieModel model = new CalorieModel();
+                                model.ProductName = dto.product_name; model.Carbs = (uint)dto.Carbs; model.Fats = (uint)dto.Fats; model.Proteins = (uint)dto.Proteins;
+                                model.Calories = (uint)dto.Calories;
+
+                                DayList[selected_date.ToShortDateString()][(int)entry_index] = model;
+                                break;
+                            case "No":
+                                dto.reset_values();
+                                break;
+                        }
+                        go_back = true;
+                        break;
+                }
+            }
+        }
 
         public void AddEntry()
         {

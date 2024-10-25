@@ -177,7 +177,7 @@ namespace DietMaker.View
             return str;
         }
 
-        public CalorieModel AddEntry()
+        /*public CalorieModel AddEntry()
         {
             AnsiConsole.Clear();
 
@@ -185,7 +185,7 @@ namespace DietMaker.View
             int calories = AnsiConsole.Ask<int>("Enter number of calories:");
 
             return new CalorieModel();
-        }
+        }*/
 
         public string ViewEntries(List<CalorieModel> entries)
         {
@@ -226,6 +226,20 @@ namespace DietMaker.View
             string choice = AnsiConsole.Prompt(selection_prompt);
             
             return choice;
+        }
+
+        public DTO ModifyEntry(DTO dto)
+        {
+            AnsiConsole.Clear();
+            AnsiConsole.Write(new Rule("[yellow]Entry Modyfication Menu[/]").RuleStyle("grey"));
+
+            Text t = new Text("Product Name = " + dto.product_name + " | Carbs = " + dto.Carbs + " | Fats = " + dto.Fats + " | Proteis = " + dto.Proteins + " | Calories = " + dto.Calories).Centered();
+            AnsiConsole.Write(t);
+
+            dto.choice = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("What are you interested in?")
+            .AddChoices(new[] { "Product Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }));
+
+            return dto;
         }
 
         public DTO AddEntry(DTO dto)
