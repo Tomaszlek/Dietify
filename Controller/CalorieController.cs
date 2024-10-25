@@ -315,7 +315,7 @@ namespace DietMaker.Controller
 
                         if(choice1 == "Yes")
                         {
-                            if (DayList[selected_date.ToShortDateString()].Count() < entry_index){
+                            if (DayList[selected_date.ToShortDateString()].Count <= entry_index){
                                 _view.Error("There is no such Index Friend");
                                 break;
                             }
