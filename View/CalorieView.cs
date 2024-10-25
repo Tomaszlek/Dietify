@@ -13,10 +13,11 @@ namespace DietMaker.View
             AnsiConsole.Write(new FigletText("Diet Maker").Color(Color.Green).Centered());
         }
 
-        public string DisplayMenu(DateTime selected_date)
+        public string DisplayMenu(DateTime selected_date, DTO dto, UserModel user)
         {
             AnsiConsole.Clear();
 
+            //DayTracker(dto, user);
             DisplayLogo();
             AnsiConsole.Write(new Rule("[yellow]Main Menu[/]").RuleStyle("grey"));
 
@@ -74,13 +75,15 @@ namespace DietMaker.View
             return dto;
         }
 
-        public void DayTracking(DTO dto, UserModel user)
+        public void DayTracker(DTO dto, UserModel user)
         {
-            AnsiConsole.Clear();
             
-
-
-
+            AnsiConsole.Cursor.SetPosition(0, Console.WindowHeight - 5);
+            AnsiConsole.Write(new BarChart()
+            .Width((int)(Console.WindowWidth * 0.4))
+            .CenterLabel()
+            .AddItem("Carbs", (int)(dto.Carbs), Color.Green));
+            AnsiConsole.Cursor.SetPosition(0, 0);
         }
 
         public string SelectDayScreen()

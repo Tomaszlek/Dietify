@@ -30,9 +30,12 @@ namespace DietMaker.Controller
         {
             while (running)
             {
-                //AnsiConsole.Clear();
-                string choice = _view.DisplayMenu(selected_date);
+                DTO dto_t = new DTO();
+                dto_t.reset_values();
+                //_view.DayTracker(dto_t, _user);
 
+                string choice = _view.DisplayMenu(selected_date, dto_t, _user);
+                
                 switch (choice)
                 {
                     case "Select Day":
