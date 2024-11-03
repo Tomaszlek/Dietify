@@ -1,77 +1,91 @@
 ﻿using DietMaker.Model;
+using DietMaker.API;
 using DietMaker.View;
 using Spectre.Console;
 using System.Collections.Generic;
 using System;
-using System.Linq.Expressions;
-
+using System.Threading.Tasks;
 
 namespace DietMaker.Controller
 {
     public class CalorieController
     {
-        private UserModel _user;
-        private Dictionary<string, List<CalorieModel>> DayList;
-        private CalorieView _view;
-        private bool running = true;
-        private DateTime selected_date;
-        private DTO dto;
+        private readonly NutritionixClient _nutritionixClient;
+        private readonly UserModel _user;
+        private Dictionary<string, List<CalorieModel>> _dayList;
+        private readonly CalorieView _view;
+        private readonly MealDataStorage _storage;
+        private bool _running;
+        private DateTime _selectedDate;
+        private UserDTO _userDTO;
 
         public CalorieController()
         {
             _user = new UserModel();
-            DayList = new Dictionary<string, List<CalorieModel>>();
+            _dayList = new Dictionary<string, List<CalorieModel>>();
             _view = new CalorieView();
-            selected_date = DateTime.Today;
-            dto = new DTO();
+            _storage = new MealDataStorage("meals.json");
+            _selectedDate = DateTime.Today;
+            _userDTO = new UserDTO();
+            _nutritionixClient = new NutritionixClient("aa6ed47d", "3e9fcbb613cce2df9e19f641d4630c31");
+            _running = true;
+
+            LoadMeals();
         }
 
-        public void Run()
+        public async Task Run()
         {
-            while (running)
+            while (_running)
             {
-                DTO dto_t = new DTO();
-                dto_t.reset_values();
-                //_view.DayTracker(dto_t, _user);
+                ResetUserDTO();
+                string choice = _view.DisplayMenu(_selectedDate, _userDTO, _user);
 
-                string choice = _view.DisplayMenu(selected_date, dto_t, _user);
-                
-                switch (choice)
-                {
-                    case "Select Day":
-                        SelectDay();
-                        break;
-                    case "Add Meal":
-                        AddMeal();
-                        break;
-                    case "View Entries":
-                        ViewEntries();
-                        break;
-                    case "Select Tracking":
-                        SelectTracking();
-                        break;
-                    case "Exit":
-                        _view.ExitProgram();
-                        running = false;
-                        break;
-                    case "Options":
-                        Options();
-                        break;
-                }
-
+                await ExecuteMenuChoice(choice);
             }
-
         }
 
-        public uint CalculateCalories(DTO dto)
+        private async Task ExecuteMenuChoice(string choice)
         {
-            return (uint)(dto.Carbs * 4 + dto.Fats * 9 + dto.Proteins * 4);
+            switch (choice)
+            {
+                case "Select Day":
+                    SelectDay();
+                    break;
+                case "Add Meal":
+                    await AddMeal();
+                    break;
+                case "View Entries":
+                    ViewEntries();
+                    break;
+                case "Select Tracking":
+                    SelectTracking();
+                    break;
+                case "Exit":
+                    ExitProgram();
+                    break;
+                case "Options":
+                    await ShowOptions();
+                    break;
+                default:
+                    _view.Error("Invalid choice, please try again.");
+                    break;
+            }
         }
-        public void Options()
-        {
-            bool go_back = false;
 
-            while (!go_back)
+        private async void LoadMeals()
+        {
+            _dayList = await _storage.LoadMealsAsync();
+        }
+
+        private void ResetUserDTO()
+        {
+            _userDTO.ResetValues();
+        }
+
+        private async Task ShowOptions()
+        {
+            bool goBack = false;
+            while (!goBack)
             {
                 string choice = _view.OptionsMenu();
                 switch (choice)
@@ -80,305 +94,396 @@ namespace DietMaker.Controller
                         SetYourGoal();
                         break;
                     case "Save Data":
-                        
+                        await SaveData();
                         break;
                     case "Return":
-                        go_back = true;
+                        goBack = true;
                         break;
                 }
             }
         }
 
-        public void SetYourGoal()
+        private async Task SaveData()
         {
-            bool go_back = false;
+            await _storage.SaveMealsAsync(_dayList);
+        }
 
-            while (!go_back)
+        private void SetYourGoal()
+        {
+            bool goBack = false;
+
+            while (!goBack)
             {
-                dto = _view.SetYourGoal(dto, _user);
-                string choice = dto.choice;
-                switch (choice)
+                _userDTO = _view.SetYourGoal(_userDTO, _user);
+                string choice = _userDTO.Choice;
+                if (choice == "Apply/Discard")
                 {
-                    case "Carbs":
-                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
-                        break;
-                    case "User Name":
-                        dto.product_name = _view.EnterString("Set your User Name:");
-                        break;
-                    case "Fats":
-                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
-                        break;
-                    case "Proteins":
-                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
-                        break;
-                    case "Calories":
-                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
-                        break;
-                    case "Apply/Discard":
-
-                        string choice1 = _view.ApplyDiscard();
-
-                        if(choice1 == "NO")
-                        {
-                            dto.reset_values();
-                            go_back = true;
-                        }
-                        else
-                        {
-                            _user.carbs_goal = (uint)dto.Carbs;
-                            _user.UserName = dto.product_name;
-                            _user.fats_goal = (uint)dto.Fats;
-                            _user.proteins_goal = (uint)dto.Proteins;
-                            _user.calories_goal = (uint)dto.Calories;
-                        }
-                        go_back = true;
-                        break;
+                    goBack = ApplyOrDiscardGoal();
+                }
+                else
+                {
+                    UpdateUserGoals(choice);
                 }
             }
         }
 
-        public void SelectDay()
+        private bool ApplyOrDiscardGoal()
         {
-            string choice = _view.SelectDayScreen();
+            string choice = _view.ApplyDiscard();
+            if (choice == "NO")
+            {
+                _userDTO.ResetValues();
+                return true;
+            }
+            UpdateUserGoals(null);
+            _view.DisplayGoalUpdated();
+            return true;
+        }
 
+        private void UpdateUserGoals(string choice)
+        {
             switch (choice)
             {
-                case "Tommorow":
-                    selected_date = selected_date.AddDays(1);
-                    //Console.ReadKey();
+                case "Carbs":
+                    _userDTO.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
                     break;
-                case "Yeasterday":
-                    selected_date = selected_date.AddDays(-1);
+                case "User Name":
+                    _userDTO.ProductName = _view.EnterString("Set your User Name:");
+                    break;
+                case "Fats":
+                    _userDTO.Fats = (int)_view.EnterUint("How many grams of Fats: ");
+                    break;
+                case "Proteins":
+                    _userDTO.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
+                    break;
+                case "Calories":
+                    _userDTO.Calories = (int)_view.EnterUint("How many Calories: ");
+                    break;
+            }
+            _user.CarbsGoal = (uint)_userDTO.Carbs;
+            _user.UserName = _userDTO.ProductName;
+            _user.FatsGoal = (uint)_userDTO.Fats;
+            _user.ProteinsGoal = (uint)_userDTO.Proteins;
+            _user.CaloriesGoal = (uint)_userDTO.Calories;
+        }
+
+        private void SelectDay()
+        {
+            string choice = _view.SelectDayScreen();
+            switch (choice)
+            {
+                case "Tomorrow":
+                    _selectedDate = _selectedDate.AddDays(1);
+                    break;
+                case "Yesterday":
+                    _selectedDate = _selectedDate.AddDays(-1);
                     break;
                 case "Today":
-                    selected_date = DateTime.Today;
+                    _selectedDate = DateTime.Today;
                     break;
                 case "Select Date":
-                    selected_date = _view.SelectDateScreen(selected_date);
-                    break;
-                case "Return":
-
+                    _selectedDate = _view.SelectDateScreen(_selectedDate);
                     break;
             }
         }
 
-       
-
-        public void AddMeal()
+        private async Task AddMeal()
         {
-            bool go_back = false;
+            bool goBack = false;
 
-            while (!go_back)
+            while (!goBack)
             {
                 string choice = _view.AddMeal();
                 switch (choice)
                 {
-                    case "My Meals":
-                        //my meals screen
-                        break;
                     case "Meal Database":
-                        //API sherch screen
+                        await AddMealFromApi();
                         break;
                     case "Enter Macro":
                         EnterMacro();
                         break;
                     case "Return":
-                        go_back = true;
+                        goBack = true;
                         break;
                 }
             }
         }
 
-        public void EnterMacro()
+        private async Task AddMealFromApi()
         {
-            bool go_back = false;
-
-            while (!go_back)
+            try
             {
-                dto = _view.DisplayEnterMacro(dto);
-                string choice = dto.choice;
+                string mealName = _view.EnterString("Enter meal name to search:");
+                await AnsiConsole.Status().StartAsync("Searching for meal...", async ctx =>
+                {
+                    var mealData = await _nutritionixClient.FetchMealDataAsync(mealName);
+                    if (mealData != null)
+                    {
+                        AddMealToDayList(mealData);
+                        _view.DisplayMealAdded(mealData);
+                    }
+                    else
+                    {
+                        _view.DisplayMealSearchError(mealName);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _view.Error($"Error while adding meal: {ex.Message}");
+            }
+        }
+
+        private void AddMealToDayList(CalorieModel mealData)
+        {
+            if (!_dayList.ContainsKey(_selectedDate.ToShortDateString()))
+            {
+                _dayList[_selectedDate.ToShortDateString()] = new List<CalorieModel>();
+            }
+            _dayList[_selectedDate.ToShortDateString()].Add(mealData);
+        }
+
+        private void EnterMacro()
+        {
+            bool goBack = false;
+
+            while (!goBack)
+            {
+                // Display the current DTO and get the user's choice
+                _userDTO = _view.DisplayEnterMacro(_userDTO);
+                string choice = _userDTO.Choice;
+
                 switch (choice)
                 {
                     case "Carbs":
-                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
+                        _userDTO.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
                         break;
+
                     case "Fats":
-                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
+                        _userDTO.Fats = (int)_view.EnterUint("How many grams of Fats: ");
                         break;
+
                     case "Proteins":
-                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
+                        _userDTO.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
                         break;
+
                     case "Calories":
-                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
+                        _userDTO.Calories = (int)_view.EnterUint("How many Calories: ");
                         break;
+
                     case "Apply/Discard":
+                        string applyDiscardChoice = _view.ApplyDiscard();
 
-                        string choice1 = _view.ApplyDiscard();
-
-                        if (choice == "NO")
+                        if (applyDiscardChoice == "No")
                         {
-                            dto.reset_values();
-                            go_back = true;
+                            _userDTO.ResetValues();
+                            goBack = true;
                         }
                         else
                         {
-
-                            if (!DayList.ContainsKey(selected_date.ToShortDateString()))
+                            // Ensure DayList contains an entry for the selected date
+                            if (!_dayList.ContainsKey(_selectedDate.ToShortDateString()))
                             {
-                                DayList.Add(selected_date.ToShortDateString(), new List<CalorieModel>());
+                                _dayList.Add(_selectedDate.ToShortDateString(), new List<CalorieModel>());
                             }
 
-                            CalorieModel model = new CalorieModel();
-                            model.ProductName = "Macro "; model.Carbs = (uint)dto.Carbs; model.Fats = (uint)dto.Fats; model.Proteins = (uint)dto.Proteins;
+                            // Create and populate a new CalorieModel
+                            CalorieModel model = new CalorieModel
+                            {
+                                ProductName = "Macro",
+                                Carbs = (uint)_userDTO.Carbs,
+                                Fats = (uint)_userDTO.Fats,
+                                Proteins = (uint)_userDTO.Proteins
+                            };
 
-                            if (dto.Calories == 0)
-                            {                               
+                            // Calculate Calories if not provided
+                            if (_userDTO.Calories == 0)
+                            {
                                 model.Calories = model.Carbs * 4 + model.Fats * 9 + model.Proteins * 4;
                             }
                             else
                             {
-                                model.Calories = (uint)dto.Calories;                               
+                                model.Calories = (uint)_userDTO.Calories;
                             }
 
-                            DayList[selected_date.ToShortDateString()].Add(model);
-                            dto.reset_values();
-                            go_back = true;
+                            // Add the model to the DayList for the selected date
+                            _dayList[_selectedDate.ToShortDateString()].Add(model);
+                            _userDTO.ResetValues();
+                            goBack = true; // Exit loop after applying
                         }
+                        break;
+
+                    default:
                         break;
                 }
             }
         }
 
-        public void SelectTracking()
+        private bool UpdateMacroValues(string choice)
+        {
+            switch (choice)
+            {
+                case "Carbs":
+                    _userDTO.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
+                    break;
+                case "Fats":
+                    _userDTO.Fats = (int)_view.EnterUint("How many grams of Fats: ");
+                    break;
+                case "Proteins":
+                    _userDTO.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
+                    break;
+                case "Calories":
+                    _userDTO.Calories = (int)_view.EnterUint("How many Calories: ");
+                    break;
+                case "Apply/Discard":
+                    return true;
+            }
+            return false;
+        }
+
+        private void SaveMacroEntry()
+        {
+            if (!_dayList.ContainsKey(_selectedDate.ToShortDateString()))
+            {
+                _dayList[_selectedDate.ToShortDateString()] = new List<CalorieModel>();
+            }
+
+            var model = new CalorieModel
+            {
+                ProductName = "Macro",
+                Carbs = (uint)_userDTO.Carbs,
+                Fats = (uint)_userDTO.Fats,
+                Proteins = (uint)_userDTO.Proteins,
+                Calories = _userDTO.Calories == 0 ? CalculateCalories(_userDTO) : (uint)_userDTO.Calories
+            };
+
+            _dayList[_selectedDate.ToShortDateString()].Add(model);
+            _view.DisplayMealAdded(model);
+            _userDTO.ResetValues();
+        }
+
+        public uint CalculateCalories(UserDTO userDTO)
+        {
+            return (uint)(userDTO.Carbs * 4 + userDTO.Fats * 9 + userDTO.Proteins * 4);
+        }
+
+        private void SelectTracking()
         {
             _view.DisplayTrackingMenu();
         }
 
-        public void ViewEntries()
+        private void ViewEntries()
         {
-            bool go_back = false;
-            string choice = string.Empty;
+            bool goBack = false;
 
-            while (!go_back)
+            while (!goBack)
             {
-                if (DayList.ContainsKey(selected_date.ToShortDateString()))
-                {
-                    choice = _view.ViewEntries(DayList[selected_date.ToShortDateString()]);
-                }
-                else
-                {
-                    choice = _view.ViewEntries(new List<CalorieModel>());
-                }
+                var entries = _dayList.ContainsKey(_selectedDate.ToShortDateString())
+                    ? _dayList[_selectedDate.ToShortDateString()]
+                    : new List<CalorieModel>();
 
+                string choice = _view.ViewEntries(entries);
                 if (choice == "Make Some Changes")
                 {
-                    EditEntriesChoices();
+                    EditEntries();
                 }
                 else
                 {
-                    go_back = true;
+                    goBack = true;
                 }
             }
         }
 
-        public void EditEntriesChoices()
+        private void EditEntries()
         {
-            bool go_back = false;
-            string choice = string.Empty;
-            string choice1 = string.Empty;
-            int entry_index = -1;
+            bool goBack = false;
 
-            while(!go_back){
+            while (!goBack)
+            {
+                var entries = _dayList.ContainsKey(_selectedDate.ToShortDateString())
+                    ? _dayList[_selectedDate.ToShortDateString()]
+                    : new List<CalorieModel>();
 
-                if (DayList.ContainsKey(selected_date.ToShortDateString()))
-                {
-                    choice = _view.EditEntriesChoices(DayList[selected_date.ToShortDateString()]);
-                }
-                else
-                {
-                    var empty_entry = new List<CalorieModel>();
-                    choice = _view.EditEntriesChoices(empty_entry);
-                }
+                string entryChoice = _view.EditEntries(entries);
 
-                switch (choice)
+                switch (entryChoice)
                 {
                     case "Edit Entry":
-                        if (!DayList.ContainsKey(selected_date.ToShortDateString()))
+                        if (!entries.Any())
                         {
                             _view.Error("There is Nothing to Modify");
                             break;
                         }
 
-                        entry_index = (int)_view.EnterUint("Give me index of en entry you want to Modify");
+                        int entryIndexToEdit = (int)_view.EnterUint("Give me the index of the entry you want to modify:");
 
-                        if (DayList[selected_date.ToShortDateString()].Count <= entry_index)
+                        if (entryIndexToEdit < 0 || entryIndexToEdit >= entries.Count)
                         {
                             _view.Error("There is no such Index Friend");
                             break;
                         }
 
-                        ModifyEntry((uint)entry_index);
-
+                        ModifyEntry((uint)entryIndexToEdit);
                         break;
-                    case "Remove Entry":
 
-                        if (!DayList.ContainsKey(selected_date.ToShortDateString()))
+                    case "Remove Entry":
+                        if (!entries.Any())
                         {
                             _view.Error("There is Nothing to Remove Friend :)");
                             break;
                         }
 
-                        entry_index = (int)_view.EnterUint("Give me index of en entry you want to remowe");
-                        choice1 = _view.ApplyDiscard();
+                        int entryIndexToRemove = (int)_view.EnterUint("Give me the index of the entry you want to remove:");
+                        string confirmRemove = _view.ApplyDiscard();
 
-                        if(choice1 == "Yes")
+                        if (confirmRemove == "Yes")
                         {
-                            if (DayList[selected_date.ToShortDateString()].Count <= entry_index){
+                            if (entryIndexToRemove < 0 || entryIndexToRemove >= entries.Count)
+                            {
                                 _view.Error("There is no such Index Friend");
                                 break;
                             }
-                            DayList[selected_date.ToShortDateString()].RemoveAt(entry_index);
+
+                            entries.RemoveAt(entryIndexToRemove);
                         }
-                        entry_index = -1;
                         break;
 
-                    case "Add Entry":
-                        AddEntry();
-                        break;
                     case "Return":
-                        go_back = true;
+                        goBack = true;
+                        break;
+
+                    default:
+                        _view.Error("Invalid choice, please try again.");
                         break;
                 }
-
             }
         }
 
         public void ModifyEntry(uint entry_index)
         {
             bool go_back = false;
-            dto = DayList[selected_date.ToShortDateString()][(int)entry_index].CopyToDTO();
-            
+            _userDTO = _dayList[_selectedDate.ToShortDateString()][(int)entry_index].ToDTO();
 
             while (!go_back)
             {
-                dto = _view.ModifyEntry(dto);
-                string choice = dto.choice;
+                _userDTO = _view.ModifyEntry(_userDTO);
+                string choice = _userDTO.Choice;
                 switch (choice)
                 {
                     case "Product Name":
-                        dto.product_name = _view.EnterString("What is your product called: ");
+                        _userDTO.ProductName = _view.EnterString("What is your product called: ");
                         break;
                     case "Carbs":
-                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
+                        _userDTO.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
                         break;
                     case "Fats":
-                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
+                        _userDTO.Fats = (int)_view.EnterUint("How many grams of Fats: ");
                         break;
                     case "Proteins":
-                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
+                        _userDTO.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
                         break;
                     case "Calories":
-                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
+                        _userDTO.Calories = (int)_view.EnterUint("How many Calories: ");
                         break;
                     case "Apply/Discard":
                         string choice1 = _view.ApplyDiscard();
@@ -386,15 +491,19 @@ namespace DietMaker.Controller
                         switch (choice1)
                         {
                             case "Yes":
+                                CalorieModel model = new CalorieModel
+                                {
+                                    ProductName = _userDTO.ProductName,
+                                    Carbs = (uint)_userDTO.Carbs,
+                                    Fats = (uint)_userDTO.Fats,
+                                    Proteins = (uint)_userDTO.Proteins,
+                                    Calories = (uint)_userDTO.Calories
+                                };
 
-                                CalorieModel model = new CalorieModel();
-                                model.ProductName = dto.product_name; model.Carbs = (uint)dto.Carbs; model.Fats = (uint)dto.Fats; model.Proteins = (uint)dto.Proteins;
-                                model.Calories = (uint)dto.Calories;
-
-                                DayList[selected_date.ToShortDateString()][(int)entry_index] = model;
+                                _dayList[_selectedDate.ToShortDateString()][(int)entry_index] = model;
                                 break;
                             case "No":
-                                dto.reset_values();
+                                _userDTO.ResetValues();
                                 break;
                         }
                         go_back = true;
@@ -403,72 +512,10 @@ namespace DietMaker.Controller
             }
         }
 
-        public void AddEntry()
+        private void ExitProgram()
         {
-            bool go_back = false;
-
-            while (!go_back)
-            {
-                dto = _view.AddEntry(dto);
-                string choice = dto.choice;
-                switch (choice)
-                {
-                    case "Product Name":
-                        dto.product_name = _view.EnterString("What is your product called: ");
-                        break;
-                    case "Carbs":
-                        dto.Carbs = (int)_view.EnterUint("How many grams of Carbs: ");
-                        break;
-                    case "Fats":
-                        dto.Fats = (int)_view.EnterUint("How many grams of Fats: ");
-                        break;
-                    case "Proteins":
-                        dto.Proteins = (int)_view.EnterUint("How many grams of Proteins: ");
-                        break;
-                    case "Calories":
-                        dto.Calories = (int)_view.EnterUint("How many Calories: ");
-                        break;
-                    case "Apply/Discard":
-                        string choice1 = _view.ApplyDiscard();
-                        
-                        switch (choice1){
-                            case "Yes":
-                                if (!DayList.ContainsKey(selected_date.ToShortDateString()))
-                                {
-                                    DayList.Add(selected_date.ToShortDateString(), new List<CalorieModel>());
-                                }
-
-                                CalorieModel model = new CalorieModel();
-                                model.ProductName = dto.product_name; model.Carbs = (uint)dto.Carbs; model.Fats = (uint)dto.Fats; model.Proteins = (uint)dto.Proteins;
-
-                                if (dto.Calories == 0)
-                                {
-                                    model.Calories = CalculateCalories(dto);
-                                }
-                                else
-                                {
-                                    model.Calories = (uint)dto.Calories;
-                                }
-                                DayList[selected_date.ToShortDateString()].Add(model);
-                                break;
-                            case "No":
-                                dto.reset_values();
-                                break;
-                        }
-                        go_back = true;
-                        break;
-                }
-            }
-        }
-
-        public void TotalCalories()
-        {
-            /*int totalCalories = 0;
-            foreach (var entry in _entries)
-            {
-                totalCalories += entry.Calories;
-            }
-            _view.ShowTotalCalories(totalCalories);*/
+            _running = false;
+            _view.DisplayExitMessage();
         }
     }
 }

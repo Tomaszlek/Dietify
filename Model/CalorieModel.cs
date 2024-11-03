@@ -1,5 +1,6 @@
 ﻿namespace DietMaker.Model
 {
+    // Model reprezentujący dane o posiłku
     public class CalorieModel
     {
         public string ProductName { get; set; }
@@ -8,17 +9,17 @@
         public uint Carbs { get; set; }
         public uint Proteins { get; set; }
 
-
-        public CalorieModel(uint carbs, uint fats, uint proteins, uint calories, string productname)
+        public CalorieModel(uint carbs, uint fats, uint proteins, uint calories, string productName)
         {
             Carbs = carbs;
             Fats = fats;
             Proteins = proteins;
             Calories = calories;
-            ProductName = productname;
+            ProductName = productName;
         }
 
-        public CalorieModel() {
+        public CalorieModel()
+        {
             Carbs = 0;
             Fats = 0;
             Proteins = 0;
@@ -26,60 +27,67 @@
             ProductName = string.Empty;
         }
 
-        public DTO CopyToDTO()
+        // Konwersja na UserDTO
+        public UserDTO ToDTO()
         {
-            var dto = new DTO();
-            dto.product_name = ProductName; dto.Carbs = (int)Carbs; dto.Fats = (int)Fats;
-            dto.Proteins = (int)Proteins; dto.Calories = (int)Calories;
-            return dto;
+            return new UserDTO
+            {
+                ProductName = this.ProductName,
+                Carbs = (int)this.Carbs,
+                Fats = (int)this.Fats,
+                Proteins = (int)this.Proteins,
+                Calories = (int)this.Calories
+            };
         }
     }
 
+    // Model reprezentujący dane użytkownika i cele żywieniowe
     public class UserModel
     {
         public string UserName { get; set; }
-        public uint carbs_goal { get; set; }
-        public uint proteins_goal { get; set; }
-        public uint fats_goal { get; set; }
-        public uint calories_goal { get; set; }
+        public uint CarbsGoal { get; set; }
+        public uint ProteinsGoal { get; set; }
+        public uint FatsGoal { get; set; }
+        public uint CaloriesGoal { get; set; }
 
+        public UserModel()
+        {
+            UserName = string.Empty;
+            CarbsGoal = 0;
+            ProteinsGoal = 0;
+            FatsGoal = 0;
+            CaloriesGoal = 0;
+        }
     }
 
-    public class DTO
+    // DTO używany do przesyłania danych między widokiem a kontrolerem
+    public class UserDTO
     {
         public int Calories { get; set; }
         public int Fats { get; set; }
         public int Carbs { get; set; }
         public int Proteins { get; set; }
-        public string product_name { get; set; }
-        public string choice { get; set; }
-        public float partial_ammount { get; set; }
-        public int gram_ammount { get; set; }
+        public string ProductName { get; set; }
+        public string Choice { get; set; }
+        public float PartialAmount { get; set; }
+        public int GramAmount { get; set; }
 
-        public DTO()
+        public UserDTO()
+        {
+            ResetValues();
+        }
+
+        // Metoda resetująca wartości DTO
+        public void ResetValues()
         {
             Calories = 0;
             Fats = 0;
             Carbs = 0;
             Proteins = 0;
-            gram_ammount = 0;
-            partial_ammount = 1;
-            product_name = string.Empty;
-            choice = string.Empty;
+            GramAmount = 0;
+            PartialAmount = 1.0f;
+            ProductName = string.Empty;
+            Choice = string.Empty;
         }
-
-        public void reset_values()
-        {
-            Calories = 0;
-            Fats = 0;
-            Carbs = 0;
-            Proteins = 0;
-            gram_ammount = 0;
-            partial_ammount = 1;
-            product_name = string.Empty;
-            choice = string.Empty;
-        }
-
     }
-
 }
