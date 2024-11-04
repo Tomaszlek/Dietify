@@ -1,4 +1,6 @@
-﻿namespace DietMaker.Model
+﻿using System.Text.Json;
+
+namespace DietMaker.Model
 {
     // Model reprezentujący dane o posiłku
     public class CalorieModel
@@ -57,6 +59,27 @@
             ProteinsGoal = 0;
             FatsGoal = 0;
             CaloriesGoal = 0;
+        }
+
+        public void SaveToFile(string filePath)
+        {
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string jsonData = JsonSerializer.Serialize(this, options);
+            File.WriteAllText(filePath, jsonData);
+        }
+
+        // Metoda do wczytywania danych użytkownika z pliku JSON
+        public static UserModel LoadFromFile(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                string jsonData = File.ReadAllText(filePath);
+                return JsonSerializer.Deserialize<UserModel>(jsonData) ?? new UserModel();
+            }
+            else
+            {
+                return new UserModel();
+            }
         }
     }
 

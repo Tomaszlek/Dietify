@@ -1,6 +1,7 @@
 ﻿using DietMaker.Model;
 using DietMaker.API;
 using DietMaker.View;
+using DietMaker;
 using Spectre.Console;
 using System.Collections.Generic;
 using System;
@@ -21,8 +22,8 @@ namespace DietMaker.Controller
 
         public CalorieController()
         {
-            _user = new UserModel();
-            _dayList = new Dictionary<string, List<CalorieModel>>();
+            _user = UserModel.LoadFromFile("user_data.json");
+            _dayList = new Dictionary<string, List<CalorieModel>>(); 
             _view = new CalorieView();
             _storage = new MealDataStorage("meals.json");
             _selectedDate = DateTime.Today;
@@ -31,6 +32,8 @@ namespace DietMaker.Controller
             _running = true;
 
             LoadMeals();
+            
+
         }
 
         public async Task Run()
@@ -38,7 +41,7 @@ namespace DietMaker.Controller
             while (_running)
             {
                 ResetUserDTO();
-                string choice = _view.DisplayMenu(_selectedDate, _userDTO, _user);
+                string choice = _view.DisplayMenu(_selectedDate, _userDTO, _user, _dayList);
 
                 await ExecuteMenuChoice(choice);
             }
@@ -106,6 +109,7 @@ namespace DietMaker.Controller
         private async Task SaveData()
         {
             await _storage.SaveMealsAsync(_dayList);
+            _user.SaveToFile("user_data.json");
         }
 
         private void SetYourGoal()
@@ -514,6 +518,7 @@ namespace DietMaker.Controller
 
         private void ExitProgram()
         {
+            SaveData();
             _running = false;
             _view.DisplayExitMessage();
         }
