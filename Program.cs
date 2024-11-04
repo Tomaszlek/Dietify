@@ -13,7 +13,7 @@ namespace DietMaker
             {
                 @"            YOU", @"            ARE", @"            THE", @"            BEST", @"            HURRAY!!!"
             };
-            // Definicja klatek animacji
+            
             string[] frames = new string[]
             {
             @"
@@ -44,12 +44,14 @@ namespace DietMaker
             };
 
             int frameCount = frames.Length;
-            int delay = 250;  // Opóźnienie między klatkami w milisekundach
-            int totalDuration = 4500;  // Całkowity czas trwania animacji w milisekundach
+            int delay = 300;  
+            int totalDuration = 4500;  
 
-            // Obliczamy liczbę powtórzeń animacji w zależności od czasu trwania
+            
             int repetitions = totalDuration / (frameCount * delay);
 
+            Console.CursorVisible = false;
+            
             for (int j = 0; j < repetitions; j++)
             {
                 for (int i = 0; i < frameCount; i++)
@@ -60,11 +62,11 @@ namespace DietMaker
                     }
 
                     Console.Clear();
-                    AnsiConsole.
+                    Console.SetCursorPosition(0,9);
                     Console.WriteLine(frames[i]);
                     Console.WriteLine(words[i]);
                     Thread.Sleep(delay);
-
+                    
                 }
                 if (Console.KeyAvailable == true)
                 {
@@ -73,12 +75,12 @@ namespace DietMaker
                 }
             }
         }
-        static async Task Main(string[] args)  // Changed to async Task
+        static async Task Main(string[] args)  
         {
             PlayAsciiAnimation();
 
             CalorieController controller = new CalorieController();
-            await controller.Run();  // Await the Run method if it's async
+            await controller.Run();  
         }
     }
 }

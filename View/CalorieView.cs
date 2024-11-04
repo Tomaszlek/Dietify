@@ -32,8 +32,8 @@ namespace DietMaker.View
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]Choose an option:[/]")
                 .PageSize(6)
-                .HighlightStyle("cyan bold")
-                .AddChoices("Select Day", "Add Meal", "View Entries", "Select Tracking", "Options", "Exit"));
+                .HighlightStyle("green")
+                .AddChoices("Select Day", "Add Meal", "View Entries", /*"Select Tracking",*/ "Options", "Exit"));
 
             return choice;
         }
@@ -46,7 +46,7 @@ namespace DietMaker.View
 
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]Choose a tracking period:[/]")
-                .HighlightStyle("cyan bold")
+                .HighlightStyle("green")
                 .AddChoices("Daily", "Weekly", "Monthly", "Return"));
 
             return choice;
@@ -60,7 +60,7 @@ namespace DietMaker.View
 
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]Options:[/]")
-                .HighlightStyle("cyan bold")
+                .HighlightStyle("green")
                 .AddChoices("Set Your Goal", "Save Data", "Return"));
 
             return choice;
@@ -77,7 +77,7 @@ namespace DietMaker.View
 
             userDTO.Choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]Set Your Goal:[/]")
-                .HighlightStyle("cyan bold")
+                .HighlightStyle("green")
                 .AddChoices("User Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard"));
 
             return userDTO;
@@ -142,8 +142,8 @@ namespace DietMaker.View
 
             return AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]What day do you want to choose?[/]")
-                .AddChoices("Tomorrow", "Yesterday", "Today", "Select Date", "Return")
-                .HighlightStyle(new Style(Color.Green)));
+                .HighlightStyle("green")
+                .AddChoices("Tomorrow", "Yesterday", "Today", "Select Date", "Return"));
         }
 
         public DateTime SelectDateScreen(DateTime date)
@@ -165,7 +165,7 @@ namespace DietMaker.View
 
             return AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]What are you interested in?[/]")
-                .AddChoices("My Meals", "Meal Database", "Enter Macro", "Return")
+                .AddChoices("Meal Database", "Enter Macro", "Return")
                 .HighlightStyle(new Style(Color.Green)));
         }
 
@@ -323,6 +323,8 @@ namespace DietMaker.View
         public void DisplayExitMessage()
         {
             AnsiConsole.MarkupLine("[blue]Goodbye.[/]");
+            Console.CursorVisible = false;
+            Console.ReadKey();
         }
 
         public void ExitProgram()
