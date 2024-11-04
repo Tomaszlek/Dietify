@@ -24,7 +24,10 @@ namespace DietMaker.View
         {
             AnsiConsole.Clear();
             DisplayLogo(selectedDate);
+
             DayTracker(selectedDate, userDTO, user, mealData);
+
+            AnsiConsole.Cursor.SetPosition(0, Console.WindowHeight - 19);
 
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]Choose an option:[/]")
@@ -70,7 +73,7 @@ namespace DietMaker.View
             AnsiConsole.Write(new Rule("[yellow]Goal Setting[/]").RuleStyle("grey"));
 
             AnsiConsole.MarkupLine($"[green bold]Looking Good, {user.UserName}![/]");
-            AnsiConsole.WriteLine($"[bold]Current Goals[/]: Carbs: {userDTO.Carbs}, Fats: {userDTO.Fats}, Proteins: {userDTO.Proteins}, Calories: {userDTO.Calories}\n");
+            AnsiConsole.MarkupLine($"[bold]Current Goals[/]: Carbs: {userDTO.Carbs}, Fats: {userDTO.Fats}, Proteins: {userDTO.Proteins}, Calories: {userDTO.Calories}\n");
 
             userDTO.Choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]Set Your Goal:[/]")
@@ -100,46 +103,36 @@ namespace DietMaker.View
                 totalCalories += entry.Calories;
             }
 
+            AnsiConsole.Cursor.SetPosition(0, Console.WindowHeight - 9);
+
             DisplayProgressBar("Carbs", totalCarbs, user.CarbsGoal, Color.Green);
             DisplayProgressBar("Fats", totalFats, user.FatsGoal, Color.Yellow);
             DisplayProgressBar("Proteins", totalProteins, user.ProteinsGoal, Color.Blue);
             DisplayProgressBar("Calories", totalCalories, user.CaloriesGoal, Color.Red);
+
+            AnsiConsole.Cursor.SetPosition(0, 0);
         }
 
         private void DisplayProgressBar(string label, uint total, uint goal, Color color)
         {
-            float percentage = (float)total / goal;
+            float percentage = goal == 0 ? 0 : (float)total / goal;
+            percentage = Math.Clamp(percentage, 0, 1);
 
-            if (goal == 0)
-            {
-                percentage = 0;
-            }
-            else
-            {
-                percentage = Math.Clamp(percentage, 0, 1); // Upewnij się, że wartość jest w zakresie [0, 1]
-            }
-
-            // Ustawiamy całkowitą szerokość wykresu
             int totalBarWidth = 150;
-            // Szerokość dostępna dla wykresu
             int barWidth = (int)(percentage * totalBarWidth);
 
-            // Używamy paddingu do wyśrodkowania etykiety
-            string paddedLabel = $"{label}{new string(' ', 10)}";
+            string paddedLabel = $"{label}".PadRight(15);
 
-            // Ustawiamy maksymalną wartość dla wykresu, aby nie przekraczał 100%
+            // Ustawienie wykresu z etykietą zawierającą emotikonę
             var barChart = new BarChart()
                 .Width(totalBarWidth)
                 .Label(paddedLabel)
-                .WithMaxValue(100); // Ustawiamy maksymalną wartość na 100%
+                .LeftAlignLabel()
+                .WithMaxValue(100);
 
-            // Dodajemy wartość do wykresu, obliczając barWidth jako procent w odniesieniu do maksymalnej wartości
-            barChart.AddItem("Progress", Math.Round((double)percentage * 100, 2), color);
+            barChart.AddItem("", Math.Round((double)percentage * 100, 2), color);
 
             AnsiConsole.Write(barChart);
-
-            // Opcjonalne: Dodanie pustego miejsca na końcu, aby wizualnie oddzielić od innych elementów
-            AnsiConsole.MarkupLine(""); // Dodaje nową linię po wykresie
         }
 
         public string SelectDayScreen()
