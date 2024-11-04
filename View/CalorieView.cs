@@ -12,10 +12,10 @@ namespace DietMaker.View
         public void DisplayLogo(DateTime selectedDate)
         {
             AnsiConsole.Write(new FigletText("Diet Maker")
-                .Color(Color.Green));
+                .Color(Color.Green).Centered());
             AnsiConsole.Write(new Rule("[yellow]Welcome to Diet Maker[/]"));
 
-            AnsiConsole.Write(new Markup($"[bold yellow]Selected Date:[/] [bold yellow]{selectedDate.ToString()}[/]"));
+            AnsiConsole.Write(new Markup($"[bold yellow]Selected Date:[/] [bold yellow]{selectedDate.ToShortDateString()}[/]"));
             AnsiConsole.WriteLine();
         }
 
@@ -27,7 +27,7 @@ namespace DietMaker.View
 
             DayTracker(selectedDate, userDTO, user, mealData);
 
-            AnsiConsole.Cursor.SetPosition(0, Console.WindowHeight - 19);
+            AnsiConsole.Cursor.SetPosition(0, 12);
 
             string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
                 .Title("[bold]Choose an option:[/]")

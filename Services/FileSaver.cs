@@ -24,11 +24,11 @@ namespace DietMaker
             {
                 var json = JsonSerializer.Serialize(meals, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(_filePath, json);
-                AnsiConsole.MarkupLine("[green]Info:[/]: Data has been successfully saved to JSON file.");
+                //AnsiConsole.MarkupLine("[green]Info:[/]: Data has been successfully saved to JSON file.");
             }
             catch (Exception e)
             {
-                AnsiConsole.MarkupLine($"[red]Error:[/]: Failed to save data to JSON file: {Markup.Escape(e.Message)}");
+                //AnsiConsole.MarkupLine($"[red]Error:[/]: Failed to save data to JSON file: {Markup.Escape(e.Message)}");
             }
         }
 
@@ -39,18 +39,23 @@ namespace DietMaker
             {
                 if (!File.Exists(_filePath))
                 {
+                    /*AnsiConsole.Cursor.SetPosition(0, 11);
                     AnsiConsole.MarkupLine("[yellow]Info:[/] JSON file not found. Returning an empty dictionary.");
+                    AnsiConsole.Cursor.SetPosition(0, 0);*/
                     return new Dictionary<string, List<CalorieModel>>();
                 }
 
                 var json = await File.ReadAllTextAsync(_filePath);
                 var meals = JsonSerializer.Deserialize<Dictionary<string, List<CalorieModel>>>(json);
-                AnsiConsole.MarkupLine("[green]Info:[/] Data has been successfully loaded from JSON file.");
+ 
+                /*AnsiConsole.MarkupLine("[green]Info:[/] Data has been successfully loaded from JSON file.");
+                AnsiConsole.Cursor.SetPosition(0, 0);*/
+
                 return meals ?? new Dictionary<string, List<CalorieModel>>();
             }
             catch (Exception e)
             {
-                AnsiConsole.MarkupLine($"[red]Error:[/] Failed to load data from JSON file: {Markup.Escape(e.Message)}");
+                //AnsiConsole.MarkupLine($"[red]Error:[/] Failed to load data from JSON file: {Markup.Escape(e.Message)}");
                 return new Dictionary<string, List<CalorieModel>>();
             }
         }
