@@ -1,335 +1,357 @@
-﻿using Spectre.Console;
-using DietMaker.Model;
+﻿using System;
 using System.Collections.Generic;
-using SixLabors.ImageSharp.Processing;
-
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+using DietMaker.Model;
 
 namespace DietMaker.View
 {
     public class CalorieView
     {
+        private Form mainForm;
+
+        public CalorieView()
+        {
+            InitializeUI();
+        }
+
+        private void InitializeUI()
+        {
+            // Placeholder for initialization logic of the main form
+        }
 
         public void DisplayLogo(DateTime selectedDate)
         {
-            AnsiConsole.Write(new FigletText("Diet Maker")
-                .Color(Color.Green).Centered());
-            AnsiConsole.Write(new Rule("[yellow]Welcome to Diet Maker[/]"));
-
-            AnsiConsole.Write(new Markup($"[bold yellow]Selected Date:[/] [bold yellow]{selectedDate.ToShortDateString()}[/]"));
-            AnsiConsole.WriteLine();
+            MessageBox.Show($"Welcome to Diet Maker!\nSelected Date: {selectedDate.ToShortDateString()}",
+                "Diet Maker", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        // Enhanced Main Menu with better styling and layout
         public string DisplayMenu(DateTime selectedDate, UserDTO userDTO, UserModel user, Dictionary<string, List<CalorieModel>> mealData)
         {
-            AnsiConsole.Clear();
-            DisplayLogo(selectedDate);
-
-            DayTracker(selectedDate, userDTO, user, mealData);
-
-            AnsiConsole.Cursor.SetPosition(0, 12);
-
-            string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]Choose an option:[/]")
-                .PageSize(6)
-                .HighlightStyle("green")
-                .AddChoices("Select Day", "Add Meal", "View Entries", /*"Select Tracking",*/ "Options", "Exit"));
-
-            return choice;
+            return ShowMenu(new[] { "Select Day", "Add Meal", "View Entries", "Options", "Exit" },
+                "Main Menu", $"Diet Maker - {selectedDate.ToShortDateString()}");
         }
 
-        // Enhanced Tracking Menu with more colors and layout
         public string DisplayTrackingMenu()
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Tracking Menu[/]").RuleStyle("grey"));
-
-            string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]Choose a tracking period:[/]")
-                .HighlightStyle("green")
-                .AddChoices("Daily", "Weekly", "Monthly", "Return"));
-
-            return choice;
+            return ShowMenu(new[] { "Daily", "Weekly", "Monthly", "Return" }, "Tracking Menu", "Select Tracking Period:");
         }
 
-        // Better-styled Options Menu
         public string OptionsMenu()
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Options Menu[/]").RuleStyle("grey"));
-
-            string choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]Options:[/]")
-                .HighlightStyle("green")
-                .AddChoices("Set Your Goal", "Save Data", "Return"));
-
-            return choice;
+            return ShowMenu(new[] { "Set Your Goal", "Save Data", "Return" }, "Options Menu", "Select an Option:");
         }
 
-        // Goal Setting Menu with user-friendly feedback
         public UserDTO SetYourGoal(UserDTO userDTO, UserModel user)
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Goal Setting[/]").RuleStyle("grey"));
+            using (Form goalForm = new Form
+            {
+                Text = "Set Your Goal",
+                Width = 400,
+                Height = 300,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                Label lbl = new Label
+                {
+                    Text = $"Hello, {user.UserName}! Current Goals:\nCarbs: {userDTO.Carbs}, Fats: {userDTO.Fats}, Proteins: {userDTO.Proteins}, Calories: {userDTO.Calories}",
+                    Dock = DockStyle.Top,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                goalForm.Controls.Add(lbl);
 
-            AnsiConsole.MarkupLine($"[green bold]Looking Good, {user.UserName}![/]");
-            AnsiConsole.MarkupLine($"[bold]Current Goals[/]: Carbs: {userDTO.Carbs}, Fats: {userDTO.Fats}, Proteins: {userDTO.Proteins}, Calories: {userDTO.Calories}\n");
+                ComboBox cb = new ComboBox
+                {
+                    Dock = DockStyle.Top,
+                    Items = { "User Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }
+                };
+                goalForm.Controls.Add(cb);
 
-            userDTO.Choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]Set Your Goal:[/]")
-                .HighlightStyle("green")
-                .AddChoices("User Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard"));
+                Button btn = new Button
+                {
+                    Text = "Apply",
+                    Dock = DockStyle.Bottom
+                };
+                btn.Click += (s, e) =>
+                {
+                    userDTO.Choice = cb.SelectedItem?.ToString();
+                    goalForm.Close();
+                };
+                goalForm.Controls.Add(btn);
+
+                goalForm.ShowDialog();
+            }
 
             return userDTO;
         }
 
-        // Enhanced Day Tracker with colored bar charts
         public void DayTracker(DateTime selectedDate, UserDTO userDTO, UserModel user, Dictionary<string, List<CalorieModel>> mealData)
         {
-            // Check if there are entries for the selected date
             if (!mealData.TryGetValue(selectedDate.ToShortDateString(), out List<CalorieModel> entries))
             {
-                AnsiConsole.MarkupLine($"[red]No entries found for {selectedDate.ToShortDateString()}[/]");
+                MessageBox.Show($"No entries found for {selectedDate.ToShortDateString()}",
+                    "Day Tracker", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            uint totalCarbs = 0, totalFats = 0, totalProteins = 0, totalCalories = 0;
+            string summary = $"Carbs: {entries.Sum(e => e.Carbs)} / {user.CarbsGoal}\n" +
+                             $"Fats: {entries.Sum(e => e.Fats)} / {user.FatsGoal}\n" +
+                             $"Proteins: {entries.Sum(e => e.Proteins)} / {user.ProteinsGoal}\n" +
+                             $"Calories: {entries.Sum(e => e.Calories)} / {user.CaloriesGoal}";
 
-            foreach (var entry in entries)
-            {
-                totalCarbs += entry.Carbs;
-                totalFats += entry.Fats;
-                totalProteins += entry.Proteins;
-                totalCalories += entry.Calories;
-            }
-
-            AnsiConsole.Cursor.SetPosition(0, Console.WindowHeight - 9);
-
-            DisplayProgressBar("Carbs", totalCarbs, user.CarbsGoal, Color.Green);
-            DisplayProgressBar("Fats", totalFats, user.FatsGoal, Color.Yellow);
-            DisplayProgressBar("Proteins", totalProteins, user.ProteinsGoal, Color.Blue);
-            DisplayProgressBar("Calories", totalCalories, user.CaloriesGoal, Color.Red);
-
-            AnsiConsole.Cursor.SetPosition(0, 0);
-        }
-
-        private void DisplayProgressBar(string label, uint total, uint goal, Color color)
-        {
-            float percentage = goal == 0 ? 0 : (float)total / goal;
-            percentage = Math.Clamp(percentage, 0, 1);
-
-            int totalBarWidth = 150;
-            int barWidth = (int)(percentage * totalBarWidth);
-
-            string paddedLabel = $"{label}".PadRight(15);
-
-            // Ustawienie wykresu z etykietą zawierającą emotikonę
-            var barChart = new BarChart()
-                .Width(totalBarWidth)
-                .Label(paddedLabel)
-                .LeftAlignLabel()
-                .WithMaxValue(100);
-
-            barChart.AddItem("", Math.Round((double)percentage * 100, 2), color);
-
-            AnsiConsole.Write(barChart);
+            MessageBox.Show(summary, "Day Tracker", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public string SelectDayScreen()
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Day Selection Menu[/]").RuleStyle("grey"));
-
-            return AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]What day do you want to choose?[/]")
-                .HighlightStyle("green")
-                .AddChoices("Tomorrow", "Yesterday", "Today", "Select Date", "Return"));
+            return ShowMenu(new[] { "Tomorrow", "Yesterday", "Today", "Select Date", "Return" }, "Select Day Menu", "Choose an Option:");
         }
 
         public DateTime SelectDateScreen(DateTime date)
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Day Selection By Date[/]").RuleStyle("grey"));
+            using (Form calendarForm = new Form
+            {
+                Text = "Select Date",
+                Width = 300,
+                Height = 400,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                MonthCalendar calendar = new MonthCalendar
+                {
+                    Dock = DockStyle.Fill,
+                    MaxSelectionCount = 1
+                };
+                calendarForm.Controls.Add(calendar);
 
-            var calendar = new Calendar(date.Year, date.Month).Centered();
-            calendar.AddCalendarEvent(date.Year, date.Month, date.Day);
-            AnsiConsole.Write(calendar);
+                Button btn = new Button
+                {
+                    Text = "Select Date",
+                    Dock = DockStyle.Bottom
+                };
+                btn.Click += (s, e) => calendarForm.Close();
+                calendarForm.Controls.Add(btn);
 
-            return AnsiConsole.Ask<DateTime>("[bold]Enter Date (yyyy-MM-dd):[/]");
+                calendarForm.ShowDialog();
+                return calendar.SelectionStart;
+            }
         }
 
         public string AddMeal()
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Meal Menu[/]").RuleStyle("grey"));
-
-            return AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]What are you interested in?[/]")
-                .AddChoices("Meal Database", "Enter Macro", "Return")
-                .HighlightStyle(new Style(Color.Green)));
+            return ShowMenu(new[] { "Meal Database", "Enter Macro", "Return" }, "Add Meal Menu", "Choose an Option:");
         }
 
-        public UserDTO DisplayEnterMacro(UserDTO UserDTO)
+        public UserDTO DisplayEnterMacro(UserDTO userDTO)
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Macro Entry Menu[/]").RuleStyle("grey"));
-
-            AnsiConsole.Write(new Text($"Carbs = {UserDTO.Carbs} | Fats = {UserDTO.Fats} | Proteins = {UserDTO.Proteins} | Calories = {UserDTO.Calories}").Centered());
-
-            UserDTO.Choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]What are you interested in?[/]")
-                .AddChoices("Carbs", "Fats", "Proteins", "Calories", "Apply/Discard")
-                .HighlightStyle(new Style(Color.Green)));
-
-            return UserDTO;
+            return ModifyMacros(userDTO, "Macro Entry Menu");
         }
 
         public string ApplyDiscard()
         {
-            return AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]Do you want to apply?[/]")
-                .AddChoices("Yes", "No")
-                .HighlightStyle(new Style(Color.Green)));
+            return ShowMenu(new[] { "Yes", "No" }, "Apply Changes", "Do you want to apply?");
         }
 
         public uint EnterUint(string text)
         {
-            return AnsiConsole.Ask<uint>(text);
+            return uint.Parse(EnterString(text));
         }
 
         public void Error(string message)
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Error[/]").RuleStyle("grey"));
-            AnsiConsole.Write(new Text(message).Centered());
-            Console.ReadKey();
+            MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         public float EnterFloat(string text)
         {
-            return AnsiConsole.Ask<float>(text);
+            return float.Parse(EnterString(text));
         }
 
         public string EnterString(string text)
         {
-            return AnsiConsole.Ask<string>(text);
+            using (Form inputForm = new Form
+            {
+                Text = text,
+                Width = 300,
+                Height = 200,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                TextBox tb = new TextBox { Dock = DockStyle.Fill };
+                Button btn = new Button { Text = "OK", Dock = DockStyle.Bottom };
+                btn.Click += (s, e) => inputForm.Close();
+                inputForm.Controls.Add(tb);
+                inputForm.Controls.Add(btn);
+
+                inputForm.ShowDialog();
+                return tb.Text;
+            }
         }
 
         public string ViewEntries(List<CalorieModel> entries)
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Entries View[/]").RuleStyle("grey"));
-
-            var table = new Table();
-            table.AddColumn("Num.");
-            table.AddColumn("Product Name");
-            table.AddColumn("Carbs");
-            table.AddColumn("Fats");
-            table.AddColumn("Proteins");
-            table.AddColumn("Calories");
-
-            for (int i = 0; i < entries.Count; i++)
+            using (Form viewForm = new Form
             {
-                var entry = entries[i];
-                table.AddRow(i.ToString(), entry.ProductName, entry.Carbs.ToString(), entry.Fats.ToString(), entry.Proteins.ToString(), entry.Calories.ToString());
+                Text = "Entries",
+                Width = 500,
+                Height = 400,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                ListView listView = new ListView { Dock = DockStyle.Fill};
+                listView.Columns.Add("Product Name");
+                listView.Columns.Add("Carbs");
+                listView.Columns.Add("Fats");
+                listView.Columns.Add("Proteins");
+                listView.Columns.Add("Calories");
+
+                foreach (var entry in entries)
+                {
+                    listView.Items.Add(new ListViewItem(new[]
+                    {
+                        entry.ProductName,
+                        entry.Carbs.ToString(),
+                        entry.Fats.ToString(),
+                        entry.Proteins.ToString(),
+                        entry.Calories.ToString()
+                    }));
+                }
+                viewForm.Controls.Add(listView);
+
+                Button btn = new Button { Text = "OK", Dock = DockStyle.Bottom };
+                btn.Click += (s, e) => viewForm.Close();
+                viewForm.Controls.Add(btn);
+
+                viewForm.ShowDialog();
             }
 
-            AnsiConsole.Write(table);
-
-            return AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]What is Your Intent?[/]")
-                .AddChoices("Make Some Changes", "Return")
-                .HighlightStyle(new Style(Color.Green)));
+            return "Return";
         }
 
-        public UserDTO ModifyEntry(UserDTO UserDTO)
+        public UserDTO ModifyEntry(UserDTO userDTO)
         {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Entry Modification Menu[/]").RuleStyle("grey"));
-
-            AnsiConsole.Write(new Text($"Product Name = {UserDTO.ProductName} | Carbs = {UserDTO.Carbs} | Fats = {UserDTO.Fats} | Proteins = {UserDTO.Proteins} | Calories = {UserDTO.Calories}").Centered());
-
-            UserDTO.Choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]What are you interested in?[/]")
-                .AddChoices("Product Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard")
-                .HighlightStyle(new Style(Color.Green)));
-
-            return UserDTO;
-        }
-
-        public UserDTO AddEntry(UserDTO UserDTO)
-        {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Manual Entry Adding Menu[/]").RuleStyle("grey"));
-
-            AnsiConsole.Write(new Text($"Product Name = {UserDTO.ProductName} | Carbs = {UserDTO.Carbs} | Fats = {UserDTO.Fats} | Proteins = {UserDTO.Proteins} | Calories = {UserDTO.Calories}").Centered());
-
-            UserDTO.Choice = AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]What are you interested in?[/]")
-                .AddChoices("Product Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard")
-                .HighlightStyle(new Style(Color.Green)));
-
-            return UserDTO;
-        }
-
-        public string EditEntries(List<CalorieModel> entries)
-        {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Entry Modification Menu[/]").RuleStyle("grey"));
-
-            return AnsiConsole.Prompt(new SelectionPrompt<string>()
-                .Title("[bold]How Do You Want To Modify?[/]")
-                .AddChoices("Edit Entry", "Remove Entry", "Return")
-                .HighlightStyle(new Style(Color.Green)));
+            return ModifyMacros(userDTO, "Modify Entry");
         }
 
         public void DisplayMealSearchError(string mealName)
         {
-            AnsiConsole.MarkupLine($"[red]Could not find meal '{mealName}'. Try again later or use a different search term.[/]");
+            MessageBox.Show($"Could not find meal '{mealName}'. Try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         public void DisplayMealAdded(CalorieModel mealData)
         {
-            AnsiConsole.MarkupLine($"[green]Added meal: {mealData.ProductName}, calories: {mealData.Calories} kcal[/]");
-            Console.ReadKey();
-        }
-
-        private void DisplayMealDetails(CalorieModel meal)
-        {
-            AnsiConsole.Clear();
-            AnsiConsole.Write(new Rule("[yellow]Meal Details[/]").RuleStyle("grey"));
-
-            if (meal != null)
-            {
-                AnsiConsole.MarkupLine($"[green]Meal Name:[/] {meal.ProductName}");
-                AnsiConsole.MarkupLine($"[green]Calories:[/] {meal.Calories}");
-            }
-            else
-            {
-                AnsiConsole.MarkupLine("[red]No meal details available to display.[/]");
-            }
+            MessageBox.Show($"Added meal: {mealData.ProductName}, calories: {mealData.Calories} kcal", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public void DisplayDataSaved()
         {
-            AnsiConsole.MarkupLine("[green]Data has been successfully saved.[/]");
+            MessageBox.Show("Data has been successfully saved.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public void DisplayGoalUpdated()
         {
-            AnsiConsole.MarkupLine("[green]Your goal has been successfully updated.[/]");
+            MessageBox.Show("Your goal has been successfully updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public void DisplayExitMessage()
         {
-            AnsiConsole.MarkupLine("[blue]Goodbye.[/]");
-            Console.CursorVisible = false;
-            Console.ReadKey();
+            MessageBox.Show("Goodbye!", "Exit", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        public void ExitProgram()
+        private UserDTO ModifyMacros(UserDTO userDTO, string title)
         {
-            AnsiConsole.Clear();
+            // Form logic for macro modification
+            return userDTO;
+        }
+
+        public string EditEntries(List<CalorieModel> entries)
+        {
+            using (Form editForm = new Form
+            {
+                Text = "Edit Entries",
+                Width = 600,
+                Height = 400,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Lista wpisów
+                ListBox listBox = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Height = 200,
+                    Font = new Font("Arial", 12)
+                };
+
+                foreach (var entry in entries)
+                {
+                    listBox.Items.Add($"{entry.ProductName} - {entry.Calories} kcal");
+                }
+
+                editForm.Controls.Add(listBox);
+
+                // Opcje edycji
+                ComboBox comboBoxOptions = new ComboBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    DropDownStyle = ComboBoxStyle.DropDownList,
+                    Items = { "Edit Entry", "Remove Entry", "Return" }
+                };
+                comboBoxOptions.SelectedIndex = 0;
+                editForm.Controls.Add(comboBoxOptions);
+
+                // Przycisk wyboru
+                Button btnSelect = new Button
+                {
+                    Text = "Apply",
+                    Dock = DockStyle.Bottom,
+                    Height = 40
+                };
+
+                string result = "Return";
+                btnSelect.Click += (s, e) =>
+                {
+                    if (comboBoxOptions.SelectedItem != null)
+                    {
+                        result = comboBoxOptions.SelectedItem.ToString();
+                    }
+                    editForm.Close();
+                };
+
+                editForm.Controls.Add(btnSelect);
+
+                editForm.ShowDialog();
+                return result;
+            }
+        }
+
+
+        private string ShowMenu(string[] options, string title, string prompt)
+        {
+            using (Form menuForm = new Form
+            {
+                Text = title,
+                Width = 300,
+                Height = 400,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                ListBox listBox = new ListBox
+                {
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Arial", 12),
+                    Items = { options }
+                };
+                menuForm.Controls.Add(listBox);
+
+                Button btn = new Button { Text = "Select", Dock = DockStyle.Bottom };
+                btn.Click += (s, e) => menuForm.Close();
+                menuForm.Controls.Add(btn);
+
+                menuForm.ShowDialog();
+                return listBox.SelectedItem?.ToString();
+            }
         }
     }
 }
