@@ -11,7 +11,7 @@ namespace DietMaker.View
     {
         private Form mainForm;
 
-        public CalorieView()
+        /*public CalorieView()
         {
             InitializeUI();
         }
@@ -19,7 +19,7 @@ namespace DietMaker.View
         private void InitializeUI()
         {
             // Placeholder for initialization logic of the main form
-        }
+        }*/
 
         public void DisplayLogo(DateTime selectedDate)
         {
@@ -29,19 +29,208 @@ namespace DietMaker.View
 
         public string DisplayMenu(DateTime selectedDate, UserDTO userDTO, UserModel user, Dictionary<string, List<CalorieModel>> mealData)
         {
-            return ShowMenu(new[] { "Select Day", "Add Meal", "View Entries", "Options", "Exit" },
-                "Main Menu", $"Diet Maker - {selectedDate.ToShortDateString()}");
+            using (Form menuForm = new Form
+            {
+                Text = "Diet Maker - Main Menu",
+                Width = 400,
+                Height = 350,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Panel dla lepszego rozmieszczenia kontrolek
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                menuForm.Controls.Add(panel);
+
+                // Nagłówek
+                Label lblHeader = new Label
+                {
+                    Text = $"Diet Maker - {selectedDate.ToShortDateString()}",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+                panel.Controls.Add(lblHeader);
+
+                // Lista opcji menu
+                ListBox listBoxMenu = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    Height = 200,
+                    Items = { "Select Day", "Add Meal", "View Entries", "Options", "Exit" }
+                };
+                panel.Controls.Add(listBoxMenu);
+
+                // Przycisk wyboru
+                Button btnSelect = new Button
+                {
+                    Text = "Select",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                string selectedOption = "Exit"; // Domyślny wybór (jeśli użytkownik zamknie okno)
+                btnSelect.Click += (s, e) =>
+                {
+                    if (listBoxMenu.SelectedItem != null)
+                    {
+                        selectedOption = listBoxMenu.SelectedItem.ToString();
+                        menuForm.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an option before proceeding.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                panel.Controls.Add(btnSelect);
+
+                // Wyświetlenie formularza
+                menuForm.ShowDialog();
+                return selectedOption;
+            }
         }
+
 
         public string DisplayTrackingMenu()
         {
-            return ShowMenu(new[] { "Daily", "Weekly", "Monthly", "Return" }, "Tracking Menu", "Select Tracking Period:");
+            using (Form trackingForm = new Form
+            {
+                Text = "Tracking Menu",
+                Width = 400,
+                Height = 300,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Panel kontenerowy
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                trackingForm.Controls.Add(panel);
+
+                // Nagłówek
+                Label lblHeader = new Label
+                {
+                    Text = "Select Tracking Period:",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+                panel.Controls.Add(lblHeader);
+
+                // Lista opcji
+                ListBox listBoxTracking = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    Height = 150,
+                    Items = { "Daily", "Weekly", "Monthly", "Return" }
+                };
+                panel.Controls.Add(listBoxTracking);
+
+                // Przycisk wyboru
+                Button btnSelect = new Button
+                {
+                    Text = "Select",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                string selectedOption = "Return";
+                btnSelect.Click += (s, e) =>
+                {
+                    if (listBoxTracking.SelectedItem != null)
+                    {
+                        selectedOption = listBoxTracking.SelectedItem.ToString();
+                        trackingForm.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an option.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                panel.Controls.Add(btnSelect);
+
+                trackingForm.ShowDialog();
+                return selectedOption;
+            }
         }
+
 
         public string OptionsMenu()
         {
-            return ShowMenu(new[] { "Set Your Goal", "Save Data", "Return" }, "Options Menu", "Select an Option:");
+            using (Form optionsForm = new Form
+            {
+                Text = "Options Menu",
+                Width = 400,
+                Height = 300,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Panel kontenerowy
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                optionsForm.Controls.Add(panel);
+
+                // Nagłówek
+                Label lblHeader = new Label
+                {
+                    Text = "Options:",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+                panel.Controls.Add(lblHeader);
+
+                // Lista opcji
+                ListBox listBoxOptions = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    Height = 150,
+                    Items = { "Set Your Goal", "Save Data", "Return" }
+                };
+                panel.Controls.Add(listBoxOptions);
+
+                // Przycisk wyboru
+                Button btnSelect = new Button
+                {
+                    Text = "Select",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                string selectedOption = "Return";
+                btnSelect.Click += (s, e) =>
+                {
+                    if (listBoxOptions.SelectedItem != null)
+                    {
+                        selectedOption = listBoxOptions.SelectedItem.ToString();
+                        optionsForm.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an option.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                panel.Controls.Add(btnSelect);
+
+                optionsForm.ShowDialog();
+                return selectedOption;
+            }
         }
+
 
         public UserDTO SetYourGoal(UserDTO userDTO, UserModel user)
         {
@@ -105,8 +294,71 @@ namespace DietMaker.View
 
         public string SelectDayScreen()
         {
-            return ShowMenu(new[] { "Tomorrow", "Yesterday", "Today", "Select Date", "Return" }, "Select Day Menu", "Choose an Option:");
+            using (Form selectDayForm = new Form
+            {
+                Text = "Select Day Menu",
+                Width = 400,
+                Height = 300,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Panel kontenerowy
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                selectDayForm.Controls.Add(panel);
+
+                // Nagłówek
+                Label lblHeader = new Label
+                {
+                    Text = "What day do you want to choose?",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+                panel.Controls.Add(lblHeader);
+
+                // Lista opcji
+                ListBox listBoxDays = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    Height = 150,
+                    Items = { "Tomorrow", "Yesterday", "Today", "Select Date", "Return" }
+                };
+                panel.Controls.Add(listBoxDays);
+
+                // Przycisk wyboru
+                Button btnSelect = new Button
+                {
+                    Text = "Select",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                string selectedOption = "Return";
+                btnSelect.Click += (s, e) =>
+                {
+                    if (listBoxDays.SelectedItem != null)
+                    {
+                        selectedOption = listBoxDays.SelectedItem.ToString();
+                        selectDayForm.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an option.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                panel.Controls.Add(btnSelect);
+
+                selectDayForm.ShowDialog();
+                return selectedOption;
+            }
         }
+
 
         public DateTime SelectDateScreen(DateTime date)
         {
@@ -140,18 +392,298 @@ namespace DietMaker.View
 
         public string AddMeal()
         {
-            return ShowMenu(new[] { "Meal Database", "Enter Macro", "Return" }, "Add Meal Menu", "Choose an Option:");
+            using (Form addMealForm = new Form
+            {
+                Text = "Add Meal Menu",
+                Width = 400,
+                Height = 300,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Panel kontenerowy
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                addMealForm.Controls.Add(panel);
+
+                // Nagłówek
+                Label lblHeader = new Label
+                {
+                    Text = "What are you interested in?",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+                panel.Controls.Add(lblHeader);
+
+                // Lista opcji
+                ListBox listBoxMealOptions = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    Height = 150,
+                    Items = { "Meal Database", "Enter Macro", "Return" }
+                };
+                panel.Controls.Add(listBoxMealOptions);
+
+                // Przycisk wyboru
+                Button btnSelect = new Button
+                {
+                    Text = "Select",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                string selectedOption = "Return"; // Domyślna opcja
+                btnSelect.Click += (s, e) =>
+                {
+                    if (listBoxMealOptions.SelectedItem != null)
+                    {
+                        selectedOption = listBoxMealOptions.SelectedItem.ToString();
+                        addMealForm.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an option before proceeding.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                panel.Controls.Add(btnSelect);
+
+                // Wyświetlenie formularza
+                addMealForm.ShowDialog();
+                return selectedOption;
+            }
         }
+
 
         public UserDTO DisplayEnterMacro(UserDTO userDTO)
         {
-            return ModifyMacros(userDTO, "Macro Entry Menu");
+            // Zapisz oryginalne wartości przed rozpoczęciem edycji
+            UserDTO originalUserDTO = new UserDTO
+            {
+                Carbs = userDTO.Carbs,
+                Fats = userDTO.Fats,
+                Proteins = userDTO.Proteins,
+                Calories = userDTO.Calories
+            };
+
+            using (Form macroForm = new Form
+            {
+                Text = "Macro Entry Menu",
+                Width = 400,
+                Height = 400,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Panel kontenerowy
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                macroForm.Controls.Add(panel);
+
+                // Nagłówek
+                Label lblHeader = new Label
+                {
+                    Text = "Enter Macros:",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+                panel.Controls.Add(lblHeader);
+
+                // Informacje o bieżących wartościach
+                Label lblCurrentMacros = new Label
+                {
+                    Text = $"Carbs = {userDTO.Carbs}, Fats = {userDTO.Fats}, Proteins = {userDTO.Proteins}, Calories = {userDTO.Calories}",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 60
+                };
+                panel.Controls.Add(lblCurrentMacros);
+
+                // Lista opcji makro
+                ListBox listBoxOptions = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12),
+                    Height = 150,
+                    Items = { "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }
+                };
+                panel.Controls.Add(listBoxOptions);
+
+                // Przycisk wyboru
+                Button btnSelect = new Button
+                {
+                    Text = "Select",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                // Przycisk powrotu (Return)
+                Button btnReturn = new Button
+                {
+                    Text = "Return",
+                    Dock = DockStyle.Bottom,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                // Przycisk powrotu (Return) zamykający formularz
+                btnReturn.Click += (s, e) =>
+                {
+                    // Po kliknięciu przycisku Return, zamykamy formularz i wracamy do menu głównego
+                    macroForm.Close();
+                };
+
+                // Przycisk Select - logika wyboru opcji
+                btnSelect.Click += (s, e) =>
+                {
+                    if (listBoxOptions.SelectedItem != null)
+                    {
+                        string choice = listBoxOptions.SelectedItem.ToString();
+
+                        // Otwórz okno dialogowe do wprowadzenia nowej wartości
+                        switch (choice)
+                        {
+                            case "Carbs":
+                                userDTO.Carbs = (int)EnterUint("Enter grams of Carbs:");
+                                break;
+                            case "Fats":
+                                userDTO.Fats = (int)EnterUint("Enter grams of Fats:");
+                                break;
+                            case "Proteins":
+                                userDTO.Proteins = (int)EnterUint("Enter grams of Proteins:");
+                                break;
+                            case "Calories":
+                                userDTO.Calories = (int)EnterUint("Enter Calories:");
+                                break;
+                            case "Apply/Discard":
+                                // Wyświetl dialog z pytaniem, czy zatwierdzić czy odrzucić zmiany
+                                DialogResult dialogResult = MessageBox.Show("Do you want to apply the changes?", "Apply Changes", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                                if (dialogResult == DialogResult.Yes)
+                                {
+                                    // Zatwierdzenie zmian - zmiany są już zapisane w userDTO
+                                    macroForm.Close(); // Zakończ formularz
+                                }
+                                else if (dialogResult == DialogResult.No)
+                                {
+                                    // Odrzucenie zmian - przywrócenie oryginalnych danych
+                                    userDTO.Carbs = originalUserDTO.Carbs;
+                                    userDTO.Fats = originalUserDTO.Fats;
+                                    userDTO.Proteins = originalUserDTO.Proteins;
+                                    userDTO.Calories = originalUserDTO.Calories;
+                                    macroForm.Close(); // Zakończ formularz
+                                }
+                                return;
+                        }
+
+                        // Zaktualizuj etykietę z bieżącymi wartościami
+                        lblCurrentMacros.Text = $"Carbs = {userDTO.Carbs}, Fats = {userDTO.Fats}, Proteins = {userDTO.Proteins}, Calories = {userDTO.Calories}";
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an option before proceeding.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+
+                // Dodanie przycisków do panelu
+                panel.Controls.Add(btnSelect);
+                panel.Controls.Add(btnReturn);
+
+                // Wyświetlenie formularza
+                macroForm.ShowDialog();
+            }
+
+            return userDTO;
         }
+
+
+
+
+
+
 
         public string ApplyDiscard()
         {
-            return ShowMenu(new[] { "Yes", "No" }, "Apply Changes", "Do you want to apply?");
+            string result = "";
+
+            using (Form applyDiscardForm = new Form
+            {
+                Text = "Apply Changes",
+                Width = 300,
+                Height = 200,
+                StartPosition = FormStartPosition.CenterParent
+            })
+            {
+                // Panel kontenerowy
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                applyDiscardForm.Controls.Add(panel);
+
+                // Etykieta z pytaniem
+                Label lblMessage = new Label
+                {
+                    Text = "Do you want to apply the changes?",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Arial", 12, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+                panel.Controls.Add(lblMessage);
+
+                // Przycisk Apply
+                Button btnApply = new Button
+                {
+                    Text = "Apply",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                // Przycisk Discard
+                Button btnDiscard = new Button
+                {
+                    Text = "Discard",
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    Font = new Font("Arial", 12)
+                };
+
+                // Przyciski odpowiedzialne za wybór
+                btnApply.Click += (s, e) =>
+                {
+                    result = "Apply"; // Zatwierdzenie zmian
+                    applyDiscardForm.Close();
+                };
+
+                btnDiscard.Click += (s, e) =>
+                {
+                    result = "Discard"; // Odrzucenie zmian
+                    applyDiscardForm.Close();
+                };
+
+                panel.Controls.Add(btnApply);
+                panel.Controls.Add(btnDiscard);
+
+                applyDiscardForm.ShowDialog();
+            }
+
+            return result; // Zwróć wynik po zamknięciu formularza
         }
+
+
+
+
 
         public uint EnterUint(string text)
         {
