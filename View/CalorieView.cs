@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -11,15 +11,65 @@ namespace DietMaker.View
     {
         private Form mainForm;
 
-        /*public CalorieView()
+        private void RenderProgressCharts(Panel panel, Dictionary<string, List<CalorieModel>> dayList, UserModel user)
         {
-            InitializeUI();
+            panel.Controls.Clear(); // Czyszczenie panelu
+
+            var today = DateTime.Today.ToShortDateString();
+            var progress = new UserDTO();
+
+            if (dayList.TryGetValue(today, out var meals))
+            {
+                progress.Carbs = (int)meals.Sum(m => m.Carbs);
+                progress.Fats = (int)meals.Sum(m => m.Fats);
+                progress.Proteins = (int)meals.Sum(m => m.Proteins);
+                progress.Calories = (int)meals.Sum(m => m.Calories);
+            }
+
+            // Dodawanie pasków postępu
+            AddProgressBar(panel, "Calories", progress.Calories, Math.Max(1, user.CaloriesGoal));
+            AddProgressBar(panel, "Proteins", progress.Proteins, Math.Max(1, user.ProteinsGoal));
+            AddProgressBar(panel, "Carbs", progress.Carbs, Math.Max(1, user.CarbsGoal));
+            AddProgressBar(panel, "Fats", progress.Fats, Math.Max(1, user.FatsGoal));
         }
 
-        private void InitializeUI()
+        private void AddProgressBar(Panel panel, string label, int value, uint goal)
         {
-            // Placeholder for initialization logic of the main form
-        }*/
+            Color barColor = DetermineProgressColor(value, goal);
+            // Ta sama implementacja, co poprzednio
+            Label lbl = new Label
+            {
+                Text = $"{label}: {value}/{goal} ({CalculatePercentage(value, goal)}%)",
+                Dock = DockStyle.Top,
+                Height = 20
+            };
+            panel.Controls.Add(lbl);
+
+            ProgressBar progressBar = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = (int)goal,
+                Value = Math.Min((int)value, (int)goal),
+                Dock = DockStyle.Top,
+                Height = 20
+            };
+            progressBar.ForeColor = barColor;
+            panel.Controls.Add(progressBar);
+        }
+
+        private Color DetermineProgressColor(int value, uint goal)
+        {
+            double percentage = (value / (double)goal) * 100;
+
+            if (percentage <= 70) return Color.Green;   // Good progress
+            if (percentage <= 90) return Color.Orange;  // Approaching limit
+            return Color.Red;                           // Exceeded goal
+        }
+
+        private int CalculatePercentage(int value, uint goal)
+        {
+            return goal > 0 ? (int)((value / (double)goal) * 100) : 0;
+        }
 
         public void DisplayLogo(DateTime selectedDate)
         {
@@ -32,49 +82,120 @@ namespace DietMaker.View
             using (Form menuForm = new Form
             {
                 Text = "Diet Maker - Main Menu",
-                Width = 400,
-                Height = 350,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Tło w ciemnym kolorze
+                ForeColor = Color.White // Tekst w jasnym kolorze
             })
             {
-                // Panel dla lepszego rozmieszczenia kontrolek
-                Panel panel = new Panel
+                // Ustawienie koloru tytułu formularza
+                menuForm.Paint += (s, e) =>
                 {
-                    Dock = DockStyle.Fill
+                    e.Graphics.DrawString(menuForm.Text, new Font("Arial", 14, FontStyle.Bold),
+                        new SolidBrush(Color.Red), new PointF(10, 10));
                 };
-                menuForm.Controls.Add(panel);
+
+                // Główna tabela układu
+                TableLayoutPanel mainLayout = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    RowCount = 3,
+                    ColumnCount = 1,
+                    BackColor = Color.FromArgb(30, 30, 30) // Tło w ciemnym kolorze
+                };
+                mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 100)); // Górny pasek (nagłówek)
+                mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 60));  // Sekcja menu
+                mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 40));  // Sekcja wykresów
+                menuForm.Controls.Add(mainLayout);
 
                 // Nagłówek
                 Label lblHeader = new Label
                 {
                     Text = $"Diet Maker - {selectedDate.ToShortDateString()}",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    Font = new Font("Arial", 24, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Height = 40
+                    Height = 100,
+                    BackColor = Color.FromArgb(45, 45, 45), // Pasek w nieco jaśniejszym kolorze
+                    ForeColor = Color.FromArgb(200, 255, 20, 20)
                 };
-                panel.Controls.Add(lblHeader);
+                mainLayout.Controls.Add(lblHeader);
 
-                // Lista opcji menu
-                ListBox listBoxMenu = new ListBox
+                // Sekcja menu
+                Panel menuPanel = new Panel
                 {
-                    Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12),
-                    Height = 200,
-                    Items = { "Select Day", "Add Meal", "View Entries", "Options", "Exit" }
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.FromArgb(30, 30, 30)
                 };
-                panel.Controls.Add(listBoxMenu);
+                mainLayout.Controls.Add(menuPanel);
 
-                // Przycisk wyboru
                 Button btnSelect = new Button
                 {
                     Text = "Select",
                     Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(70, 70, 70), // Guzik w jasnym ciemnym kolorze
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnSelect.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90); // Obramowanie przycisku
+                menuPanel.Controls.Add(btnSelect);
+
+                ListBox listBoxMenu = new ListBox
+                {
+                    Dock = DockStyle.Top,
+                    Font = new Font("Consolas", 16),
+                    Height = 250,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło listy
+                    ForeColor = Color.Blue, // Niebieskie napisy w opcjach
+                    BorderStyle = BorderStyle.None, // Usunięcie obramowania
+                    ItemHeight = 30, // Wyższe wiersze dla lepszej czytelności
                 };
 
-                string selectedOption = "Exit"; // Domyślny wybór (jeśli użytkownik zamknie okno)
+                // Dodanie opcji menu
+                listBoxMenu.Items.AddRange(new object[] { "Select Day", "Add Meal", "View Entries", "Options", "Exit" });
+
+                // Ustawienie koloru podświetlenia
+                listBoxMenu.DrawMode = DrawMode.OwnerDrawFixed;
+                listBoxMenu.DrawItem += (s, e) =>
+                {
+                    e.DrawBackground();
+                    bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                    Color backgroundColor = isSelected ? Color.FromArgb(150, 50, 255, 50) : Color.FromArgb(40, 40, 40);
+                    Color textColor = Color.Blue;
+
+                    using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    }
+
+                    using (SolidBrush textBrush = new SolidBrush(textColor))
+                    {
+                        e.Graphics.DrawString(listBoxMenu.Items[e.Index].ToString(),
+                            e.Font, textBrush, e.Bounds, StringFormat.GenericDefault);
+                    }
+
+                    e.DrawFocusRectangle();
+                };
+
+                menuPanel.Controls.Add(listBoxMenu);
+
+                
+
+                // Panel wykresów
+                Panel progressPanel = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+                mainLayout.Controls.Add(progressPanel);
+
+                // Renderowanie wykresów
+                RenderProgressCharts(progressPanel, mealData, user);
+
+                string selectedOption = "Exit"; // Domyślny wybór
                 btnSelect.Click += (s, e) =>
                 {
                     if (listBoxMenu.SelectedItem != null)
@@ -87,7 +208,6 @@ namespace DietMaker.View
                         MessageBox.Show("Please select an option before proceeding.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 };
-                panel.Controls.Add(btnSelect);
 
                 // Wyświetlenie formularza
                 menuForm.ShowDialog();
@@ -95,15 +215,18 @@ namespace DietMaker.View
             }
         }
 
-
         public string DisplayTrackingMenu()
         {
+            string selectedOption = "Return"; // Domyślna opcja
+
             using (Form trackingForm = new Form
             {
                 Text = "Tracking Menu",
-                Width = 400,
-                Height = 300,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
                 // Panel kontenerowy
@@ -118,9 +241,10 @@ namespace DietMaker.View
                 {
                     Text = "Select Tracking Period:",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    Font = new Font("Consolas", 18, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Height = 40
+                    Height = 60,
+                    ForeColor = Color.Blue // Niebieski nagłówek
                 };
                 panel.Controls.Add(lblHeader);
 
@@ -128,22 +252,52 @@ namespace DietMaker.View
                 ListBox listBoxTracking = new ListBox
                 {
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12),
+                    Font = new Font("Consolas", 14),
                     Height = 150,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło ciemne
+                    ForeColor = Color.White, // Tekst jasny
+                    BorderStyle = BorderStyle.None, // Usunięcie obramowania
+                    ItemHeight = 40, // Wyższe wiersze
                     Items = { "Daily", "Weekly", "Monthly", "Return" }
                 };
+
+                // Podświetlenie wybranej opcji
+                listBoxTracking.DrawMode = DrawMode.OwnerDrawFixed;
+                listBoxTracking.DrawItem += (s, e) =>
+                {
+                    e.DrawBackground();
+                    bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                    Color backgroundColor = isSelected ? Color.FromArgb(80, 255, 0, 0) : Color.FromArgb(40, 40, 40);
+                    Color textColor = Color.White;
+
+                    using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    }
+
+                    using (SolidBrush textBrush = new SolidBrush(textColor))
+                    {
+                        e.Graphics.DrawString(listBoxTracking.Items[e.Index].ToString(),
+                            e.Font, textBrush, e.Bounds, StringFormat.GenericDefault);
+                    }
+
+                    e.DrawFocusRectangle();
+                };
+
                 panel.Controls.Add(listBoxTracking);
 
-                // Przycisk wyboru
+                // Przycisk "Select"
                 Button btnSelect = new Button
                 {
                     Text = "Select",
-                    Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor (LightGreen)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
-
-                string selectedOption = "Return";
+                btnSelect.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
                 btnSelect.Click += (s, e) =>
                 {
                     if (listBoxTracking.SelectedItem != null)
@@ -158,20 +312,25 @@ namespace DietMaker.View
                 };
                 panel.Controls.Add(btnSelect);
 
+                // Wyświetlenie formularza
                 trackingForm.ShowDialog();
-                return selectedOption;
+                return selectedOption; // Zwrócenie wybranej opcji
             }
         }
 
 
         public string OptionsMenu()
         {
+            string selectedOption = "Return"; // Domyślna opcja
+
             using (Form optionsForm = new Form
             {
                 Text = "Options Menu",
-                Width = 400,
-                Height = 300,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
                 // Panel kontenerowy
@@ -186,9 +345,10 @@ namespace DietMaker.View
                 {
                     Text = "Options:",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    Font = new Font("Consolas", 18, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Height = 40
+                    Height = 60,
+                    ForeColor = Color.Blue // Niebieski nagłówek
                 };
                 panel.Controls.Add(lblHeader);
 
@@ -196,28 +356,58 @@ namespace DietMaker.View
                 ListBox listBoxOptions = new ListBox
                 {
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12),
+                    Font = new Font("Consolas", 14),
                     Height = 150,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło ciemne
+                    ForeColor = Color.White, // Tekst jasny
+                    BorderStyle = BorderStyle.None, // Usunięcie obramowania
+                    ItemHeight = 40, // Wyższe wiersze
                     Items = { "Set Your Goal", "Save Data", "Return" }
                 };
+
+                // Podświetlenie wybranej opcji
+                listBoxOptions.DrawMode = DrawMode.OwnerDrawFixed;
+                listBoxOptions.DrawItem += (s, e) =>
+                {
+                    e.DrawBackground();
+                    bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                    Color backgroundColor = isSelected ? Color.FromArgb(80, 255, 0, 0) : Color.FromArgb(40, 40, 40);
+                    Color textColor = Color.White;
+
+                    using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    }
+
+                    using (SolidBrush textBrush = new SolidBrush(textColor))
+                    {
+                        e.Graphics.DrawString(listBoxOptions.Items[e.Index].ToString(),
+                            e.Font, textBrush, e.Bounds, StringFormat.GenericDefault);
+                    }
+
+                    e.DrawFocusRectangle();
+                };
+
                 panel.Controls.Add(listBoxOptions);
 
-                // Przycisk wyboru
+                // Przycisk "Select"
                 Button btnSelect = new Button
                 {
                     Text = "Select",
-                    Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor (LightGreen)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
-
-                string selectedOption = "Return";
+                btnSelect.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
                 btnSelect.Click += (s, e) =>
                 {
                     if (listBoxOptions.SelectedItem != null)
                     {
                         selectedOption = listBoxOptions.SelectedItem.ToString();
-                        optionsForm.Close();
+                        optionsForm.Close(); // Zamknięcie formularza po dokonaniu wyboru
                     }
                     else
                     {
@@ -226,8 +416,9 @@ namespace DietMaker.View
                 };
                 panel.Controls.Add(btnSelect);
 
+                // Wyświetlenie formularza
                 optionsForm.ShowDialog();
-                return selectedOption;
+                return selectedOption; // Zwrócenie wybranej opcji
             }
         }
 
@@ -237,42 +428,117 @@ namespace DietMaker.View
             using (Form goalForm = new Form
             {
                 Text = "Set Your Goal",
-                Width = 400,
-                Height = 300,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
-                Label lbl = new Label
-                {
-                    Text = $"Hello, {user.UserName}! Current Goals:\nCarbs: {userDTO.Carbs}, Fats: {userDTO.Fats}, Proteins: {userDTO.Proteins}, Calories: {userDTO.Calories}",
-                    Dock = DockStyle.Top,
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                goalForm.Controls.Add(lbl);
+                // Panel kontenerowy
+                Panel panel = new Panel { Dock = DockStyle.Fill };
+                goalForm.Controls.Add(panel);
 
-                ComboBox cb = new ComboBox
+                // Nagłówek
+                Label lblHeader = new Label
+                {
+                    Text = $"Set Your Goal - Current Goals:\nCarbs: {userDTO.Carbs}, Fats: {userDTO.Fats}, Proteins: {userDTO.Proteins}, Calories: {userDTO.Calories}",
+                    Dock = DockStyle.Top,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 60,
+                    ForeColor = Color.Blue // Niebieski nagłówek
+                };
+                panel.Controls.Add(lblHeader);
+
+                // Lista opcji
+                ListBox listBoxOptions = new ListBox
                 {
                     Dock = DockStyle.Top,
-                    Items = { "User Name", "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }
+                    Font = new Font("Consolas", 14),
+                    Height = 150,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło ciemne
+                    ForeColor = Color.White, // Tekst jasny
+                    BorderStyle = BorderStyle.None, // Usunięcie obramowania
+                    ItemHeight = 40,
+                    Items = { "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard", "Return" }
                 };
-                goalForm.Controls.Add(cb);
 
-                Button btn = new Button
+                // Podświetlenie wybranej opcji
+                listBoxOptions.DrawMode = DrawMode.OwnerDrawFixed;
+                listBoxOptions.DrawItem += (s, e) =>
                 {
-                    Text = "Apply",
-                    Dock = DockStyle.Bottom
+                    e.DrawBackground();
+                    bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                    Color backgroundColor = isSelected ? Color.FromArgb(80, 255, 0, 0) : Color.FromArgb(40, 40, 40);
+                    Color textColor = Color.White;
+
+                    using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    }
+
+                    using (SolidBrush textBrush = new SolidBrush(textColor))
+                    {
+                        e.Graphics.DrawString(listBoxOptions.Items[e.Index].ToString(),
+                            e.Font, textBrush, e.Bounds, StringFormat.GenericDefault);
+                    }
+
+                    e.DrawFocusRectangle();
                 };
-                btn.Click += (s, e) =>
+
+                panel.Controls.Add(listBoxOptions);
+
+                // Przycisk "Select"
+                Button btnSelect = new Button
                 {
-                    userDTO.Choice = cb.SelectedItem?.ToString();
-                    goalForm.Close();
+                    Text = "Select",
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor (LightGreen)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
-                goalForm.Controls.Add(btn);
+                btnSelect.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnSelect.Click += (s, e) =>
+                {
+                    if (listBoxOptions.SelectedItem != null)
+                    {
+                        string choice = listBoxOptions.SelectedItem.ToString();
+                        userDTO.Choice = choice; // Ustaw wybór użytkownika
+                        goalForm.Close(); // Zamknij formularz po dokonaniu wyboru
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an option before proceeding.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                panel.Controls.Add(btnSelect);
+
+                // Przycisk "Return"
+                Button btnReturn = new Button
+                {
+                    Text = "Return",
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(255, 99, 71), // Czerwony kolor (Tomato)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnReturn.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnReturn.Click += (s, e) =>
+                {
+                    userDTO.Choice = "Return"; // Ustaw wybór użytkownika na "Return"
+                    goalForm.Close(); // Zamknij formularz
+                };
+                panel.Controls.Add(btnReturn);
 
                 goalForm.ShowDialog();
             }
 
-            return userDTO;
+            return userDTO; // Zwrócenie zaktualizowanego obiektu UserDTO
         }
 
         public void DayTracker(DateTime selectedDate, UserDTO userDTO, UserModel user, Dictionary<string, List<CalorieModel>> mealData)
@@ -294,12 +560,16 @@ namespace DietMaker.View
 
         public string SelectDayScreen()
         {
+            string selectedOption = "Return"; // Domyślna opcja
+
             using (Form selectDayForm = new Form
             {
                 Text = "Select Day Menu",
-                Width = 400,
-                Height = 300,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
                 // Panel kontenerowy
@@ -314,9 +584,10 @@ namespace DietMaker.View
                 {
                     Text = "What day do you want to choose?",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    Font = new Font("Consolas", 18, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Height = 40
+                    Height = 60,
+                    ForeColor = Color.Blue // Niebieski nagłówek
                 };
                 panel.Controls.Add(lblHeader);
 
@@ -324,28 +595,58 @@ namespace DietMaker.View
                 ListBox listBoxDays = new ListBox
                 {
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12),
+                    Font = new Font("Consolas", 14),
                     Height = 150,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło ciemne
+                    ForeColor = Color.White, // Tekst jasny
+                    BorderStyle = BorderStyle.None, // Usunięcie obramowania
+                    ItemHeight = 40, // Wyższe wiersze
                     Items = { "Tomorrow", "Yesterday", "Today", "Select Date", "Return" }
                 };
+
+                // Podświetlenie wybranej opcji
+                listBoxDays.DrawMode = DrawMode.OwnerDrawFixed;
+                listBoxDays.DrawItem += (s, e) =>
+                {
+                    e.DrawBackground();
+                    bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                    Color backgroundColor = isSelected ? Color.FromArgb(80, 255, 0, 0) : Color.FromArgb(40, 40, 40);
+                    Color textColor = Color.White;
+
+                    using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    }
+
+                    using (SolidBrush textBrush = new SolidBrush(textColor))
+                    {
+                        e.Graphics.DrawString(listBoxDays.Items[e.Index].ToString(),
+                            e.Font, textBrush, e.Bounds, StringFormat.GenericDefault);
+                    }
+
+                    e.DrawFocusRectangle();
+                };
+
                 panel.Controls.Add(listBoxDays);
 
-                // Przycisk wyboru
+                // Przycisk "Select"
                 Button btnSelect = new Button
                 {
                     Text = "Select",
-                    Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor (LightGreen)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
-
-                string selectedOption = "Return";
+                btnSelect.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
                 btnSelect.Click += (s, e) =>
                 {
                     if (listBoxDays.SelectedItem != null)
                     {
                         selectedOption = listBoxDays.SelectedItem.ToString();
-                        selectDayForm.Close();
+                        selectDayForm.Close(); // Zamknij formularz po dokonaniu wyboru
                     }
                     else
                     {
@@ -354,50 +655,98 @@ namespace DietMaker.View
                 };
                 panel.Controls.Add(btnSelect);
 
+                // Wyświetlenie formularza
                 selectDayForm.ShowDialog();
-                return selectedOption;
+                return selectedOption; // Zwrócenie wybranej opcji
             }
         }
 
-
         public DateTime SelectDateScreen(DateTime date)
         {
+            DateTime selectedDate = date; // Ustawienie domyślnej daty
+
             using (Form calendarForm = new Form
             {
                 Text = "Select Date",
-                Width = 300,
-                Height = 400,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
+                // Ustawienie tytułu formularza na czerwony
+                calendarForm.Paint += (s, e) =>
+                {
+                    e.Graphics.DrawString(calendarForm.Text, new Font("Consolas", 16, FontStyle.Bold),
+                        new SolidBrush(Color.Red), new PointF(10, 10));
+                };
+
+                // Panel kontenerowy
+                Panel panel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
+                calendarForm.Controls.Add(panel);
+
+                // MonthCalendar (kalendarz)
                 MonthCalendar calendar = new MonthCalendar
                 {
                     Dock = DockStyle.Fill,
-                    MaxSelectionCount = 1
+                    MaxSelectionCount = 1,
+                    Font = new Font("Consolas", 14), // Czcionka dla kalendarza
+                    ForeColor = Color.White,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło ciemne kalendarza
+                    TitleBackColor = Color.FromArgb(60, 60, 60)
                 };
-                calendarForm.Controls.Add(calendar);
 
-                Button btn = new Button
+                // Obsługa zmiany daty
+                calendar.DateSelected += (s, e) =>
+                {
+                    selectedDate = e.Start;  // Przypisanie daty do zmiennej
+                };
+
+                // Domyślna data po załadowaniu formularza
+                calendar.SetDate(date);
+
+                panel.Controls.Add(calendar);
+
+                // Przycisk wyboru daty
+                Button btnSelectDate = new Button
                 {
                     Text = "Select Date",
-                    Dock = DockStyle.Bottom
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor (LightGreen)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
-                btn.Click += (s, e) => calendarForm.Close();
-                calendarForm.Controls.Add(btn);
+                btnSelectDate.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnSelectDate.Click += (s, e) =>
+                {
+                    calendarForm.Close(); // Zamknięcie formularza po wyborze daty
+                };
+                panel.Controls.Add(btnSelectDate);
 
+                // Wyświetlenie formularza
                 calendarForm.ShowDialog();
-                return calendar.SelectionStart;
+                return selectedDate; // Zwrócenie wybranej daty
             }
         }
 
         public string AddMeal()
         {
+            string selectedOption = "Return"; // Domyślna opcja
+
             using (Form addMealForm = new Form
             {
                 Text = "Add Meal Menu",
-                Width = 400,
-                Height = 300,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
                 // Panel kontenerowy
@@ -412,9 +761,10 @@ namespace DietMaker.View
                 {
                     Text = "What are you interested in?",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    Font = new Font("Consolas", 18, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Height = 40
+                    Height = 60,
+                    ForeColor = Color.Blue // Niebieski nagłówek
                 };
                 panel.Controls.Add(lblHeader);
 
@@ -422,28 +772,58 @@ namespace DietMaker.View
                 ListBox listBoxMealOptions = new ListBox
                 {
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12),
+                    Font = new Font("Consolas", 14),
                     Height = 150,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło ciemne
+                    ForeColor = Color.White, // Tekst jasny
+                    BorderStyle = BorderStyle.None, // Usunięcie obramowania
+                    ItemHeight = 40, // Wyższe wiersze
                     Items = { "Meal Database", "Enter Macro", "Return" }
                 };
+
+                // Podświetlenie wybranej opcji
+                listBoxMealOptions.DrawMode = DrawMode.OwnerDrawFixed;
+                listBoxMealOptions.DrawItem += (s, e) =>
+                {
+                    e.DrawBackground();
+                    bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                    Color backgroundColor = isSelected ? Color.FromArgb(80, 255, 0, 0) : Color.FromArgb(40, 40, 40);
+                    Color textColor = Color.White;
+
+                    using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    }
+
+                    using (SolidBrush textBrush = new SolidBrush(textColor))
+                    {
+                        e.Graphics.DrawString(listBoxMealOptions.Items[e.Index].ToString(),
+                            e.Font, textBrush, e.Bounds, StringFormat.GenericDefault);
+                    }
+
+                    e.DrawFocusRectangle();
+                };
+
                 panel.Controls.Add(listBoxMealOptions);
 
-                // Przycisk wyboru
+                // Przycisk "Select"
                 Button btnSelect = new Button
                 {
                     Text = "Select",
-                    Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor (LightGreen)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
-
-                string selectedOption = "Return"; // Domyślna opcja
+                btnSelect.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
                 btnSelect.Click += (s, e) =>
                 {
                     if (listBoxMealOptions.SelectedItem != null)
                     {
                         selectedOption = listBoxMealOptions.SelectedItem.ToString();
-                        addMealForm.Close();
+                        addMealForm.Close(); // Zamknięcie formularza po dokonaniu wyboru
                     }
                     else
                     {
@@ -454,14 +834,13 @@ namespace DietMaker.View
 
                 // Wyświetlenie formularza
                 addMealForm.ShowDialog();
-                return selectedOption;
+                return selectedOption; // Zwrócenie wybranej opcji
             }
         }
 
 
         public UserDTO DisplayEnterMacro(UserDTO userDTO)
         {
-            // Zapisz oryginalne wartości przed rozpoczęciem edycji
             UserDTO originalUserDTO = new UserDTO
             {
                 Carbs = userDTO.Carbs,
@@ -473,154 +852,141 @@ namespace DietMaker.View
             using (Form macroForm = new Form
             {
                 Text = "Macro Entry Menu",
-                Width = 400,
-                Height = 400,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
                 // Panel kontenerowy
-                Panel panel = new Panel
-                {
-                    Dock = DockStyle.Fill
-                };
+                Panel panel = new Panel { Dock = DockStyle.Fill };
                 macroForm.Controls.Add(panel);
 
-                // Nagłówek
+                // Nagłówek formularza
                 Label lblHeader = new Label
                 {
                     Text = "Enter Macros:",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 14, FontStyle.Bold),
+                    Font = new Font("Consolas", 18, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Height = 40
+                    Height = 60,
+                    ForeColor = Color.Blue // Niebieski nagłówek
                 };
                 panel.Controls.Add(lblHeader);
 
-                // Informacje o bieżących wartościach
+                // Wyświetlenie aktualnych wartości makroskładników
                 Label lblCurrentMacros = new Label
                 {
                     Text = $"Carbs = {userDTO.Carbs}, Fats = {userDTO.Fats}, Proteins = {userDTO.Proteins}, Calories = {userDTO.Calories}",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12),
+                    Font = new Font("Consolas", 14),
                     TextAlign = ContentAlignment.MiddleCenter,
                     Height = 60
                 };
                 panel.Controls.Add(lblCurrentMacros);
 
-                // Lista opcji makro
+                // Lista opcji
                 ListBox listBoxOptions = new ListBox
                 {
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12),
-                    Height = 150,
-                    Items = { "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard" }
+                    Font = new Font("Consolas", 14),
+                    Height = 200,
+                    BackColor = Color.FromArgb(40, 40, 40), // Tło ciemne
+                    ForeColor = Color.White, // Tekst biały
+                    BorderStyle = BorderStyle.None, // Usunięcie obramowania
+                    ItemHeight = 40, // Wyższe wiersze
+                    Items = { "Carbs", "Fats", "Proteins", "Calories", "Apply/Discard", "Return" }
                 };
+                listBoxOptions.DrawMode = DrawMode.OwnerDrawFixed;
+                listBoxOptions.DrawItem += (s, e) =>
+                {
+                    e.DrawBackground();
+                    bool isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+                    Color backgroundColor = isSelected ? Color.FromArgb(80, 255, 0, 0) : Color.FromArgb(40, 40, 40);
+                    Color textColor = Color.White;
+
+                    using (SolidBrush backgroundBrush = new SolidBrush(backgroundColor))
+                    {
+                        e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+                    }
+
+                    using (SolidBrush textBrush = new SolidBrush(textColor))
+                    {
+                        e.Graphics.DrawString(listBoxOptions.Items[e.Index].ToString(),
+                            e.Font, textBrush, e.Bounds, StringFormat.GenericDefault);
+                    }
+
+                    e.DrawFocusRectangle();
+                };
+
                 panel.Controls.Add(listBoxOptions);
 
-                // Przycisk wyboru
+                // Przycisk "Select"
                 Button btnSelect = new Button
                 {
                     Text = "Select",
-                    Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
-                };
-
-                // Przycisk powrotu (Return)
-                Button btnReturn = new Button
-                {
-                    Text = "Return",
                     Dock = DockStyle.Bottom,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
-
-                // Przycisk powrotu (Return) zamykający formularz
-                btnReturn.Click += (s, e) =>
-                {
-                    // Po kliknięciu przycisku Return, zamykamy formularz i wracamy do menu głównego
-                    macroForm.Close();
-                };
-
-                // Przycisk Select - logika wyboru opcji
+                btnSelect.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
                 btnSelect.Click += (s, e) =>
                 {
                     if (listBoxOptions.SelectedItem != null)
                     {
                         string choice = listBoxOptions.SelectedItem.ToString();
-
-                        // Otwórz okno dialogowe do wprowadzenia nowej wartości
-                        switch (choice)
-                        {
-                            case "Carbs":
-                                userDTO.Carbs = (int)EnterUint("Enter grams of Carbs:");
-                                break;
-                            case "Fats":
-                                userDTO.Fats = (int)EnterUint("Enter grams of Fats:");
-                                break;
-                            case "Proteins":
-                                userDTO.Proteins = (int)EnterUint("Enter grams of Proteins:");
-                                break;
-                            case "Calories":
-                                userDTO.Calories = (int)EnterUint("Enter Calories:");
-                                break;
-                            case "Apply/Discard":
-                                // Wyświetl dialog z pytaniem, czy zatwierdzić czy odrzucić zmiany
-                                DialogResult dialogResult = MessageBox.Show("Do you want to apply the changes?", "Apply Changes", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                                if (dialogResult == DialogResult.Yes)
-                                {
-                                    // Zatwierdzenie zmian - zmiany są już zapisane w userDTO
-                                    macroForm.Close(); // Zakończ formularz
-                                }
-                                else if (dialogResult == DialogResult.No)
-                                {
-                                    // Odrzucenie zmian - przywrócenie oryginalnych danych
-                                    userDTO.Carbs = originalUserDTO.Carbs;
-                                    userDTO.Fats = originalUserDTO.Fats;
-                                    userDTO.Proteins = originalUserDTO.Proteins;
-                                    userDTO.Calories = originalUserDTO.Calories;
-                                    macroForm.Close(); // Zakończ formularz
-                                }
-                                return;
-                        }
-
-                        // Zaktualizuj etykietę z bieżącymi wartościami
-                        lblCurrentMacros.Text = $"Carbs = {userDTO.Carbs}, Fats = {userDTO.Fats}, Proteins = {userDTO.Proteins}, Calories = {userDTO.Calories}";
+                        userDTO.Choice = choice; // Zapisanie wyboru użytkownika
+                        macroForm.Close(); // Zamknięcie formularza
                     }
                     else
                     {
                         MessageBox.Show("Please select an option before proceeding.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 };
-
-                // Dodanie przycisków do panelu
                 panel.Controls.Add(btnSelect);
+
+                // Przycisk "Return"
+                Button btnReturn = new Button
+                {
+                    Text = "Return",
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(255, 99, 71), // Czerwony kolor (Tomato)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnReturn.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnReturn.Click += (s, e) =>
+                {
+                    userDTO.Choice = "Return"; // Ustawienie wyboru na "Return"
+                    macroForm.Close(); // Zamknięcie formularza
+                };
                 panel.Controls.Add(btnReturn);
 
-                // Wyświetlenie formularza
                 macroForm.ShowDialog();
             }
 
-            return userDTO;
+            return userDTO; // Zwróć zaktualizowany obiekt UserDTO
         }
-
-
-
-
-
 
 
         public string ApplyDiscard()
         {
-            string result = "";
+            string result = ""; // Domyślny wynik
 
             using (Form applyDiscardForm = new Form
             {
                 Text = "Apply Changes",
-                Width = 300,
-                Height = 200,
-                StartPosition = FormStartPosition.CenterParent
+                Width = 640,
+                Height = 480,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
                 // Panel kontenerowy
@@ -635,29 +1001,38 @@ namespace DietMaker.View
                 {
                     Text = "Do you want to apply the changes?",
                     Dock = DockStyle.Top,
-                    Font = new Font("Arial", 12, FontStyle.Bold),
+                    Font = new Font("Consolas", 14, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Height = 40
+                    Height = 40,
+                    ForeColor = Color.Blue
                 };
                 panel.Controls.Add(lblMessage);
 
-                // Przycisk Apply
+                // Przycisk Apply (zielony)
                 Button btnApply = new Button
                 {
                     Text = "Apply",
                     Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Height = 50,
+                    Font = new Font("Consolas", 14, FontStyle.Bold),
+                    BackColor = Color.FromArgb(50, 205, 50), // Zielony kolor (LightGreen)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
+                btnApply.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
 
-                // Przycisk Discard
+                // Przycisk Discard (czerwony)
                 Button btnDiscard = new Button
                 {
                     Text = "Discard",
                     Dock = DockStyle.Top,
-                    Height = 40,
-                    Font = new Font("Arial", 12)
+                    Height = 50,
+                    Font = new Font("Consolas", 14, FontStyle.Bold),
+                    BackColor = Color.FromArgb(255, 99, 71), // Czerwony kolor (Tomato)
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
                 };
+                btnDiscard.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
 
                 // Przyciski odpowiedzialne za wybór
                 btnApply.Click += (s, e) =>
@@ -672,22 +1047,21 @@ namespace DietMaker.View
                     applyDiscardForm.Close();
                 };
 
+                // Dodanie przycisków do panelu
                 panel.Controls.Add(btnApply);
                 panel.Controls.Add(btnDiscard);
 
-                applyDiscardForm.ShowDialog();
+                applyDiscardForm.ShowDialog(); // Wyświetlenie formularza
             }
 
-            return result; // Zwróć wynik po zamknięciu formularza
+            return result; // Zwrócenie wynik po zamknięciu formularza
         }
-
-
-
 
 
         public uint EnterUint(string text)
         {
-            return uint.Parse(EnterString(text));
+            string userInput = EnterString(text); // Użycie EnterString do pobrania wartości
+            return uint.TryParse(userInput, out uint result) ? result : 0; // Obsługa błędu parsowania
         }
 
         public void Error(string message)
@@ -702,63 +1076,234 @@ namespace DietMaker.View
 
         public string EnterString(string text)
         {
+            string result = ""; // Domyślny wynik
+
             using (Form inputForm = new Form
             {
-                Text = text,
-                Width = 300,
-                Height = 200,
-                StartPosition = FormStartPosition.CenterParent
+                Text = "Input Required",
+                Width = 640,
+                Height = 320,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
-                TextBox tb = new TextBox { Dock = DockStyle.Fill };
-                Button btn = new Button { Text = "OK", Dock = DockStyle.Bottom };
-                btn.Click += (s, e) => inputForm.Close();
-                inputForm.Controls.Add(tb);
-                inputForm.Controls.Add(btn);
+                // Tytuł formularza w czerwonym kolorze
+                inputForm.Paint += (s, e) =>
+                {
+                    e.Graphics.DrawString(inputForm.Text, new Font("Consolas", 16, FontStyle.Bold),
+                        new SolidBrush(Color.Red), new PointF(10, 10));
+                };
 
-                inputForm.ShowDialog();
-                return tb.Text;
+                TableLayoutPanel layout = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    RowCount = 3,
+                    ColumnCount = 1,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 40)); // Tekst
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 40)); // Pole tekstowe
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 20)); // Przycisk
+                inputForm.Controls.Add(layout);
+
+                // Wyświetlany tekst
+                Label lblPrompt = new Label
+                {
+                    Text = text,
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Consolas", 14),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    ForeColor = Color.Blue // Tekst w niebieskim kolorze
+                };
+                layout.Controls.Add(lblPrompt, 0, 0);
+
+                // Pole tekstowe
+                TextBox tb = new TextBox
+                {
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Consolas", 14),
+                    BackColor = Color.FromArgb(40, 40, 40),
+                    ForeColor = Color.White
+                };
+                layout.Controls.Add(tb, 0, 1);
+
+                // Przycisk "OK"
+                Button btnOk = new Button
+                {
+                    Text = "OK",
+                    Dock = DockStyle.Fill,
+                    Height = 50,
+                    Font = new Font("Consolas", 14, FontStyle.Bold),
+                    BackColor = Color.FromArgb(70, 70, 70),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnOk.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnOk.Click += (s, e) =>
+                {
+                    result = tb.Text; // Przypisanie wprowadzonego tekstu
+                    inputForm.Close(); // Zamknięcie formularza
+                };
+                layout.Controls.Add(btnOk, 0, 2);
+
+                inputForm.ShowDialog(); // Wyświetlenie formularza
             }
+
+            return result; // Zwrócenie wprowadzonego tekstu
         }
 
         public string ViewEntries(List<CalorieModel> entries)
         {
-            using (Form viewForm = new Form
+            string result = "Return"; // Domyślna opcja
+
+            using (Form mealsForm = new Form
             {
-                Text = "Entries",
-                Width = 500,
-                Height = 400,
-                StartPosition = FormStartPosition.CenterParent
+                Text = "Meals",
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Ciemne tło
+                ForeColor = Color.White // Jasny tekst
             })
             {
-                ListView listView = new ListView { Dock = DockStyle.Fill};
-                listView.Columns.Add("Product Name");
-                listView.Columns.Add("Carbs");
-                listView.Columns.Add("Fats");
-                listView.Columns.Add("Proteins");
-                listView.Columns.Add("Calories");
-
-                foreach (var entry in entries)
+                // Tytuł w czerwonym kolorze
+                mealsForm.Paint += (s, e) =>
                 {
-                    listView.Items.Add(new ListViewItem(new[]
+                    e.Graphics.DrawString(mealsForm.Text, new Font("Consolas", 16, FontStyle.Bold),
+                        new SolidBrush(Color.Red), new PointF(10, 10));
+                };
+
+                TableLayoutPanel layout = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    RowCount = 2,
+                    ColumnCount = 1,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 80)); // Tabela
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 20)); // Przyciski
+                mealsForm.Controls.Add(layout);
+
+                // Tabela wyświetlająca wpisy
+                DataGridView dataGrid = new DataGridView
+                {
+                    Dock = DockStyle.Fill,
+                    AutoGenerateColumns = false,
+                    ReadOnly = true, // Tabela tylko do odczytu
+                    AllowUserToAddRows = false,
+                    AllowUserToDeleteRows = false,
+                    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                    MultiSelect = false,
+                    BackgroundColor = Color.FromArgb(40, 40, 40), // Tło tabeli
+                    ForeColor = Color.White,
+                    Font = new Font("Consolas", 14)
+                };
+
+                dataGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Product Name", DataPropertyName = "ProductName" });
+                dataGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Calories", DataPropertyName = "Calories" });
+                dataGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Proteins", DataPropertyName = "Proteins" });
+                dataGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Carbs", DataPropertyName = "Carbs" });
+                dataGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Fats", DataPropertyName = "Fats" });
+
+                dataGrid.DataSource = new BindingSource { DataSource = entries };
+                layout.Controls.Add(dataGrid, 0, 0);
+
+                // Panel z przyciskami
+                FlowLayoutPanel buttonPanel = new FlowLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+                layout.Controls.Add(buttonPanel, 0, 1);
+
+                // Przycisk "Edit"
+                Button btnEdit = new Button
+                {
+                    Text = "Edit",
+                    Width = 150,
+                    Height = 50,
+                    Font = new Font("Consolas", 14, FontStyle.Bold),
+                    BackColor = Color.FromArgb(70, 70, 70),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnEdit.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnEdit.Click += (s, e) =>
+                {
+                    if (dataGrid.SelectedRows.Count > 0)
                     {
-                        entry.ProductName,
-                        entry.Carbs.ToString(),
-                        entry.Fats.ToString(),
-                        entry.Proteins.ToString(),
-                        entry.Calories.ToString()
-                    }));
-                }
-                viewForm.Controls.Add(listView);
+                        int selectedIndex = dataGrid.SelectedRows[0].Index;
+                        if (selectedIndex >= 0 && selectedIndex < entries.Count)
+                        {
+                            EditEntry(entries[selectedIndex]); // Otwórz edycję wybranego wpisu
+                            dataGrid.Refresh(); // Odśwież tabelę po edycji
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an entry to edit.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                buttonPanel.Controls.Add(btnEdit);
 
-                Button btn = new Button { Text = "OK", Dock = DockStyle.Bottom };
-                btn.Click += (s, e) => viewForm.Close();
-                viewForm.Controls.Add(btn);
+                // Przycisk "Remove"
+                Button btnRemove = new Button
+                {
+                    Text = "Remove",
+                    Width = 150,
+                    Height = 50,
+                    Font = new Font("Consolas", 14, FontStyle.Bold),
+                    BackColor = Color.FromArgb(70, 70, 70),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnRemove.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnRemove.Click += (s, e) =>
+                {
+                    if (dataGrid.SelectedRows.Count > 0)
+                    {
+                        int selectedIndex = dataGrid.SelectedRows[0].Index;
+                        if (selectedIndex >= 0 && selectedIndex < entries.Count)
+                        {
+                            var confirmResult = MessageBox.Show("Are you sure to delete this entry?",
+                                "Confirm Delete",
+                                MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Warning);
 
-                viewForm.ShowDialog();
+                            if (confirmResult == DialogResult.Yes)
+                            {
+                                entries.RemoveAt(selectedIndex); // Usuń wpis
+                                dataGrid.DataSource = new BindingSource { DataSource = entries }; // Odśwież dane
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select an entry to remove.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                };
+                buttonPanel.Controls.Add(btnRemove);
+
+                // Przycisk "Close"
+                Button btnClose = new Button
+                {
+                    Text = "Close",
+                    Width = 150,
+                    Height = 50,
+                    Font = new Font("Consolas", 14, FontStyle.Bold),
+                    BackColor = Color.FromArgb(70, 70, 70),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnClose.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnClose.Click += (s, e) => mealsForm.Close();
+                buttonPanel.Controls.Add(btnClose);
+
+                mealsForm.ShowDialog();
             }
-
-            return "Return";
+            return "Return"; // Zwrócenie wartości po zakończeniu
         }
 
         public UserDTO ModifyEntry(UserDTO userDTO)
@@ -797,13 +1342,122 @@ namespace DietMaker.View
             return userDTO;
         }
 
+        private void EditEntry(CalorieModel entry)
+        {
+            using (Form editForm = new Form
+            {
+                Text = "Edit Entry",
+                Width = 1280,
+                Height = 720,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.FromArgb(30, 30, 30), // Tło ciemne
+                ForeColor = Color.White // Jasny tekst
+            })
+            {
+                // Ustawienie tytułu formularza na czerwony
+                editForm.Paint += (s, e) =>
+                {
+                    e.Graphics.DrawString(editForm.Text, new Font("Consolas", 16, FontStyle.Bold),
+                        new SolidBrush(Color.Red), new PointF(10, 10));
+                };
+
+                TableLayoutPanel layout = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    RowCount = 6,
+                    ColumnCount = 2,
+                    BackColor = Color.FromArgb(30, 30, 30)
+                };
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 15));
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 85));
+                editForm.Controls.Add(layout);
+
+                // Nazwa produktu
+                layout.Controls.Add(new Label
+                {
+                    Text = "Product Name",
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Consolas", 14),
+                    ForeColor = Color.Blue
+                }, 0, 0);
+
+                TextBox txtName = new TextBox
+                {
+                    Text = entry.ProductName,
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Consolas", 14),
+                    BackColor = Color.FromArgb(40, 40, 40),
+                    ForeColor = Color.White
+                };
+                layout.Controls.Add(txtName, 1, 0);
+
+                // Pole do edycji kalorii, białek, węgli, tłuszczów
+                AddNumericField(layout, "Calories", entry.Calories, 1, (value) => entry.Calories = value);
+                AddNumericField(layout, "Proteins", entry.Proteins, 2, (value) => entry.Proteins = value);
+                AddNumericField(layout, "Carbs", entry.Carbs, 3, (value) => entry.Carbs = value);
+                AddNumericField(layout, "Fats", entry.Fats, 4, (value) => entry.Fats = value);
+
+                // Przycisk zapisu
+                Button btnSave = new Button
+                {
+                    Text = "Save",
+                    Dock = DockStyle.Bottom,
+                    Height = 50,
+                    Font = new Font("Consolas", 16, FontStyle.Bold),
+                    BackColor = Color.FromArgb(70, 70, 70),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnSave.FlatAppearance.BorderColor = Color.FromArgb(90, 90, 90);
+                btnSave.Click += (s, e) =>
+                {
+                    // Zapisanie nazwy produktu
+                    entry.ProductName = txtName.Text;
+
+                    editForm.Close();
+                };
+                editForm.Controls.Add(btnSave);
+
+                editForm.ShowDialog();
+            }
+        }
+
+        private void AddNumericField(TableLayoutPanel layout, string label, uint value, int row, Action<uint> onSave)
+        {
+            layout.Controls.Add(new Label
+            {
+                Text = label,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Dock = DockStyle.Fill,
+                Font = new Font("Consolas", 14),
+                ForeColor = Color.Blue
+            }, 0, row);
+
+            NumericUpDown numericField = new NumericUpDown
+            {
+                Minimum = 0, // Minimalna wartość
+                Maximum = 10000, // Maksymalna wartość
+                Dock = DockStyle.Fill,
+                Font = new Font("Consolas", 14),
+                BackColor = Color.FromArgb(40, 40, 40),
+                ForeColor = Color.White
+            };
+
+            // Ustawienie wartości z uwzględnieniem zakresu
+            numericField.Value = Math.Min(numericField.Maximum, Math.Max(numericField.Minimum, value));
+
+            numericField.ValueChanged += (s, e) => onSave((uint)numericField.Value);
+            layout.Controls.Add(numericField, 1, row);
+        }
+
         public string EditEntries(List<CalorieModel> entries)
         {
             using (Form editForm = new Form
             {
                 Text = "Edit Entries",
-                Width = 600,
-                Height = 400,
+                Width = 1280,
+                Height = 720,
                 StartPosition = FormStartPosition.CenterParent
             })
             {
@@ -855,34 +1509,6 @@ namespace DietMaker.View
 
                 editForm.ShowDialog();
                 return result;
-            }
-        }
-
-
-        private string ShowMenu(string[] options, string title, string prompt)
-        {
-            using (Form menuForm = new Form
-            {
-                Text = title,
-                Width = 300,
-                Height = 400,
-                StartPosition = FormStartPosition.CenterParent
-            })
-            {
-                ListBox listBox = new ListBox
-                {
-                    Dock = DockStyle.Fill,
-                    Font = new Font("Arial", 12),
-                    Items = { options }
-                };
-                menuForm.Controls.Add(listBox);
-
-                Button btn = new Button { Text = "Select", Dock = DockStyle.Bottom };
-                btn.Click += (s, e) => menuForm.Close();
-                menuForm.Controls.Add(btn);
-
-                menuForm.ShowDialog();
-                return listBox.SelectedItem?.ToString();
             }
         }
     }
