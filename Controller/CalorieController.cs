@@ -1,4 +1,4 @@
-﻿using DietMaker.Model;
+using DietMaker.Model;
 using DietMaker.API;
 using DietMaker.View;
 using DietMaker;
@@ -32,8 +32,6 @@ namespace DietMaker.Controller
             _running = true;
 
             LoadMeals();
-            
-
         }
 
         public async Task Run()
@@ -118,15 +116,50 @@ namespace DietMaker.Controller
 
             while (!goBack)
             {
+                // Zmieniamy wywołanie na przypisanie do userDTO.Choice
                 _userDTO = _view.SetYourGoal(_userDTO, _user);
+
+                // Teraz używamy userDTO.Choice, który zawiera wybór użytkownika
                 string choice = _userDTO.Choice;
-                if (choice == "Apply/Discard")
+
+                switch (choice)
                 {
-                    goBack = ApplyOrDiscardGoal();
-                }
-                else
-                {
-                    UpdateUserGoals(choice);
+                    case "Carbs":
+                        _userDTO.Carbs = (int)_view.EnterUint($"Enter your target for Carbs (grams):");
+                        break;
+
+                    case "Fats":
+                        _userDTO.Fats = (int)_view.EnterUint($"Enter your target for Fats (grams):");
+                        break;
+
+                    case "Proteins":
+                        _userDTO.Proteins = (int)_view.EnterUint($"Enter your target for Proteins (grams):");
+                        break;
+
+                    case "Calories":
+                        _userDTO.Calories = (int)_view.EnterUint($"Enter your target for Calories:");
+                        break;
+
+                    case "Apply/Discard":
+                        string applyDiscardChoice = _view.ApplyDiscard();
+                        if (applyDiscardChoice == "Discard")
+                        {
+                            _userDTO.ResetValues();
+                        }
+                        else
+                        {
+                            UpdateUserGoals(choice);
+                        }
+                        goBack = true;
+                        break;
+
+                    case "Return":
+                        goBack = true;
+                        break;
+
+                    default:
+                        _view.Error("Invalid choice, please try again.");
+                        break;
                 }
             }
         }
@@ -317,6 +350,10 @@ namespace DietMaker.Controller
                         }
                         break;
 
+                    case "Return":
+                        goBack = true; // Wyjdź z menu, jeśli użytkownik wybierze "Return"
+                        break;
+
                     default:
                         break;
                 }
@@ -397,7 +434,7 @@ namespace DietMaker.Controller
                 }
             }
         }
-
+        
         private void EditEntries()
         {
             bool goBack = false;
@@ -462,7 +499,7 @@ namespace DietMaker.Controller
                 }
             }
         }
-
+        
         public void ModifyEntry(uint entry_index)
         {
             bool go_back = false;
